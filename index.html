@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>주간 밀프랩 가이드</title>
 <style>
+@property --gradient-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
 --bg:#f8f6f2;--card:#fff;--text:#2c3e50;--text-light:#7f8c8d;--border:#e0ddd7;
@@ -17,7 +18,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .container{max-width:1280px;margin:0 auto;padding:0 20px}
 
 /* Header */
-.header{background:linear-gradient(-45deg,#fff9f0,#f0f7ff,#fdf2f8,#f0fdf4);background-size:400% 400%;animation:gradientShift 15s ease infinite;padding:48px 0 28px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.header{background:conic-gradient(from var(--gradient-angle),#fff9f0,#f0f7ff,#fdf2f8,#f0fdf4,#fff9f0);background-size:100%;animation:spin-gradient 8s linear infinite;padding:48px 0 28px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
 .header::before{content:'';position:absolute;top:-100px;right:-100px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(231,76,60,0.08),transparent 70%);pointer-events:none}
 .header::after{content:'';position:absolute;bottom:-80px;left:-80px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(52,152,219,0.06),transparent 70%);pointer-events:none}
 .header h1{font-size:2.5em;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,#2c3e50 30%,#E74C3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
@@ -57,7 +58,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 
 /* Recipe Grid */
 .recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;padding:20px 0}
-.recipe-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:all 0.3s ease;display:flex;flex-direction:column;position:relative;overflow:hidden;border-left:4px solid transparent;opacity:0;animation:cardIn 0.4s ease forwards}
+.recipe-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:all 0.3s ease;display:flex;flex-direction:column;position:relative;overflow:hidden;border-left:4px solid transparent;transform-style:preserve-3d;opacity:0;transform:translateY(30px);transition:all 0.4s ease}
+.recipe-card.visible{opacity:1;transform:translateY(0);transition:opacity 0.5s ease,transform 0.5s ease}
 .recipe-card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 12px 32px rgba(0,0,0,0.12)}
 .recipe-card[data-cat="korean"]{border-left-color:var(--korean)}
 .recipe-card[data-cat="western"]{border-left-color:var(--western)}
@@ -154,14 +156,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .modal .tag-list span{background:linear-gradient(135deg,#f0ede8,#e8e5e0);padding:5px 12px;border-radius:14px;font-size:0.8em;color:var(--text-light);transition:all 0.2s}
 .modal .tag-list span:hover{background:var(--text);color:#fff}
 
-@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes spin-gradient{to{--gradient-angle:360deg}}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes checkDraw{0%{height:0;opacity:0}50%{height:6px;opacity:1}100%{height:12px;opacity:1}}
 @keyframes strikeIn{from{width:0}to{width:100%}}
 @keyframes rippleEffect{to{transform:scale(4);opacity:0}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.4);transform:scale(0);animation:rippleEffect 0.6s linear;pointer-events:none}
-.section.active{display:block;animation:fadeIn 0.4s ease}
+.section.active{display:block;animation:sectionIn 0.5s cubic-bezier(0.16,1,0.3,1)}
+@keyframes sectionIn{from{opacity:0;transform:translateY(16px);filter:blur(4px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+/* Scroll Progress */
+.scroll-progress{position:fixed;top:0;left:0;width:100%;height:4px;z-index:9999;background:linear-gradient(90deg,#E74C3C,#F39C12,#2ECC71,#3498DB,#9B59B6);transform-origin:left;animation:grow-progress linear;animation-timeline:scroll()}
+@keyframes grow-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* Aurora Background */
+.aurora{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden;pointer-events:none}
+.aurora span{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.15;animation:aurora-float 20s ease-in-out infinite alternate}
+@keyframes aurora-float{0%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-50px) scale(1.1)}66%{transform:translate(-20px,40px) scale(0.9)}100%{transform:translate(50px,20px) scale(1.05)}}
+
+/* Cursor Trail */
+.cursor-trail{position:fixed;pointer-events:none;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,rgba(231,76,60,0.5),transparent);animation:trail-fade 0.6s ease-out forwards;z-index:9998}
+@keyframes trail-fade{to{transform:scale(3);opacity:0}}
+
+/* Confetti */
+.confetti{position:fixed;top:-10px;width:10px;height:10px;z-index:9999;pointer-events:none;border-radius:2px;animation:confetti-fall linear forwards}
+@keyframes confetti-fall{to{top:110vh;transform:rotate(720deg) translateX(100px);opacity:0}}
+
+/* Grain Overlay */
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9997;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
+
+/* Modal Morph Blob */
+.modal{position:relative;overflow:hidden}
+.modal::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:30% 70% 70% 30%/30% 30% 70% 70%;background:linear-gradient(135deg,rgba(231,76,60,0.08),rgba(52,152,219,0.08));animation:morph 8s ease-in-out infinite;z-index:0}
+@keyframes morph{0%,100%{border-radius:30% 70% 70% 30%/30% 30% 70% 70%}50%{border-radius:70% 30% 30% 70%/70% 70% 30% 30%}}
+
+/* Pulsing Glow Button */
+#regenerateBtn{animation:pulse-glow 2s ease-in-out infinite}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 15px rgba(44,62,80,0.4)}50%{box-shadow:0 0 30px rgba(44,62,80,0.6),0 0 60px rgba(44,62,80,0.2)}}
 
 /* Print */
 @media print{
@@ -187,6 +219,13 @@ body{background:#fff}
 </style>
 </head>
 <body>
+<div class="scroll-progress"></div>
+<div class="aurora">
+<span style="width:400px;height:400px;top:10%;left:20%;background:#E74C3C;animation-delay:0s"></span>
+<span style="width:350px;height:350px;top:60%;left:60%;background:#3498DB;animation-delay:-5s"></span>
+<span style="width:300px;height:300px;top:30%;left:80%;background:#2ECC71;animation-delay:-10s"></span>
+<span style="width:250px;height:250px;top:70%;left:10%;background:#9B59B6;animation-delay:-15s"></span>
+</div>
 
 <div class="header">
 <div class="container">
@@ -285,6 +324,25 @@ document.getElementById('statsGrid').innerHTML = `
 <div class="stat-card"><div class="stat-value">${opRatio}</div><div class="stat-label">\uc6d0\ud32c/\uc6d0\ud31f \ube44\uc728</div></div>`;
 }
 
+function animateCounters(){
+  document.querySelectorAll('.stat-value').forEach(el=>{
+    const text=el.textContent;
+    const num=parseFloat(text);
+    if(isNaN(num))return;
+    const suffix=text.replace(String(num),'');
+    const duration=1500;
+    const start=performance.now();
+    const step=(now)=>{
+      const progress=Math.min((now-start)/duration,1);
+      const eased=1-Math.pow(1-progress,3);
+      const current=num*eased;
+      el.textContent=(num%1===0?Math.floor(current):current.toFixed(1))+suffix;
+      if(progress<1)requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
 // Recipes
 function renderRecipes(){
 const grid = document.getElementById('recipeGrid');
@@ -298,7 +356,7 @@ grid.innerHTML = recipes.map((r,i) => {
 const catClass = CAT_COLORS[r.displayCategory] || 'korean';
 const catName = CAT_NAMES[r.displayCategory] || r.displayCategory;
 const typeName = TYPE_NAMES[r.type] || r.type;
-return `<div class="recipe-card" data-cat="${r.displayCategory}" style="animation-delay:${Math.min(i*0.05,0.6)}s" onclick="openModal('${r.name.replace(/'/g,"\\'")}')">
+return `<div class="recipe-card" data-cat="${r.displayCategory}" onclick="openModal('${r.name.replace(/'/g,"\\'")}')">
 <div class="badges"><span class="badge badge-${catClass}">${catName}</span><span class="badge badge-type">${typeName}</span></div>
 <h3>${r.name}</h3>
 <div class="recipe-meta">
@@ -311,6 +369,18 @@ return `<div class="recipe-card" data-cat="${r.displayCategory}" style="animatio
 </div>`;
 }).join('');
 if(recipes.length === 0) grid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-light)">\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>';
+}
+
+function observeCards(){
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry,i) => {
+      if(entry.isIntersecting){
+        setTimeout(()=>entry.target.classList.add('visible'), i*50);
+        observer.unobserve(entry.target);
+      }
+    });
+  },{threshold:0.1});
+  document.querySelectorAll('.recipe-card').forEach(c=>observer.observe(c));
 }
 
 // Modal
@@ -570,6 +640,9 @@ el.nextElementSibling.classList.toggle('open');
 function toggleCheck(cb){
 cb.closest('.shopping-item').classList.toggle('checked', cb.checked);
 saveShoppingState();
+const allChecked=document.querySelectorAll('.shopping-item input[type=checkbox]');
+const checkedCount=[...allChecked].filter(c=>c.checked).length;
+if(checkedCount===allChecked.length&&allChecked.length>0)launchConfetti();
 }
 function saveShoppingState(){
 const state={};
@@ -607,6 +680,7 @@ document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'))
 tab.classList.add('active');
 currentCat = tab.dataset.cat;
 renderRecipes();
+observeCards();
 });
 });
 
@@ -614,6 +688,7 @@ renderRecipes();
 document.getElementById('searchInput').addEventListener('input', e => {
 searchQuery = e.target.value.trim();
 renderRecipes();
+observeCards();
 });
 
 // Modal close on overlay click
@@ -658,14 +733,114 @@ btn.appendChild(ripple);
 ripple.addEventListener('animationend',()=>ripple.remove());
 });
 
+// Scroll progress fallback for non-Chromium
+if(!CSS.supports('animation-timeline','scroll()')){
+  const bar=document.querySelector('.scroll-progress');
+  if(bar){bar.style.animation='none';bar.style.transform='scaleX(0)';
+    window.addEventListener('scroll',()=>{
+      const h=document.documentElement.scrollHeight-window.innerHeight;
+      bar.style.transform='scaleX('+(h>0?window.scrollY/h:0)+')';
+    },{passive:true});
+  }
+}
+
 // Init
 renderStats();
+animateCounters();
 renderRecipes();
+observeCards();
 renderWeekly();
 renderShopping();
 loadShoppingState();
 // Open all shopping categories by default
 document.querySelectorAll('.shopping-header').forEach(h => { h.classList.add('open'); h.nextElementSibling.classList.add('open'); });
+
+// Cursor Trail
+if(!('ontouchstart' in window)){
+  let lastTrail=0;
+  document.addEventListener('mousemove',e=>{
+    const now=Date.now();
+    if(now-lastTrail<30)return;
+    lastTrail=now;
+    const dot=document.createElement('div');
+    dot.className='cursor-trail';
+    dot.style.left=e.clientX+'px';
+    dot.style.top=e.clientY+'px';
+    document.body.appendChild(dot);
+    setTimeout(()=>dot.remove(),600);
+  });
+}
+
+// 3D Tilt Cards
+if(!('ontouchstart' in window)){
+  document.addEventListener('mousemove',e=>{
+    const card=e.target.closest('.recipe-card');
+    if(!card)return;
+    const rect=card.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    const rotateX=(y-rect.height/2)/12;
+    const rotateY=(rect.width/2-x)/12;
+    card.style.transform=`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px) scale(1.02)`;
+  });
+  document.addEventListener('mouseover',e=>{
+    const card=e.target.closest('.recipe-card');
+    if(!card||card._tiltBound)return;
+    card._tiltBound=true;
+    card.addEventListener('mouseleave',()=>{card.style.transform='';card._tiltBound=false;});
+  });
+}
+
+// Text Scramble
+function scrambleText(el){
+  const original=[...el.textContent];
+  const chars='가나다라마바사아자차카타파하밀프랩요리식단';
+  let iteration=0;
+  const interval=setInterval(()=>{
+    el.textContent=original.map((c,i)=>{
+      if(c===' ')return ' ';
+      if(i<iteration)return original[i];
+      return chars[Math.floor(Math.random()*chars.length)];
+    }).join('');
+    if(iteration>=original.length)clearInterval(interval);
+    iteration+=0.5;
+  },40);
+}
+setTimeout(()=>scrambleText(document.querySelector('.header h1')),300);
+
+// Magnetic Button
+const magneticBtn=document.getElementById('regenerateBtn');
+if(magneticBtn&&!('ontouchstart' in window)){
+  magneticBtn.addEventListener('mousemove',e=>{
+    magneticBtn.style.transition='none';
+    const rect=magneticBtn.getBoundingClientRect();
+    const x=e.clientX-rect.left-rect.width/2;
+    const y=e.clientY-rect.top-rect.height/2;
+    magneticBtn.style.transform=`translate(${x*0.3}px,${y*0.3}px)`;
+  });
+  magneticBtn.addEventListener('mouseleave',()=>{
+    magneticBtn.style.transition='transform 0.4s ease';
+    magneticBtn.style.transform='';
+    setTimeout(()=>magneticBtn.style.transition='',400);
+  });
+}
+
+// Confetti
+function launchConfetti(){
+  const colors=['#E74C3C','#F39C12','#2ECC71','#3498DB','#9B59B6'];
+  for(let i=0;i<60;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'%';
+    c.style.background=colors[Math.floor(Math.random()*5)];
+    c.style.animationDelay=Math.random()*0.5+'s';
+    c.style.animationDuration=(1.5+Math.random()*2)+'s';
+    c.style.width=(6+Math.random()*8)+'px';
+    c.style.height=(6+Math.random()*8)+'px';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4500);
+  }
+}
 </script>
 </body>
 </html>
