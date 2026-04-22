@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jadekim042386.github.io/meal-prep/sitemap.xml
