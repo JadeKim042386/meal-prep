@@ -217,6 +217,34 @@ body{background:#fff}
 .stats-grid{grid-template-columns:1fr 1fr}
 .stat-card{padding:12px}
 }
+/* Feedback floating button & modal */
+.feedback-btn{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(52,152,219,0.4);z-index:9998;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease}
+.feedback-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(52,152,219,0.5)}
+.feedback-btn svg{width:24px;height:24px;fill:#fff}
+.feedback-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:9999;align-items:flex-end;justify-content:flex-end;padding:24px}
+.feedback-overlay.active{display:flex}
+.feedback-modal{background:#fff;border-radius:16px;padding:24px;width:360px;max-width:calc(100vw - 48px);box-shadow:0 16px 48px rgba(0,0,0,0.2);animation:feedbackIn 0.3s ease}
+@keyframes feedbackIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.feedback-modal h3{font-size:1.2em;font-weight:700;margin-bottom:4px;color:var(--text)}
+.feedback-modal p{font-size:0.85em;color:var(--text-light);margin-bottom:16px}
+.feedback-modal textarea{width:100%;height:120px;border:2px solid var(--border);border-radius:10px;padding:12px;font-size:0.95em;font-family:inherit;resize:vertical;transition:border-color 0.3s}
+.feedback-modal textarea:focus{outline:none;border-color:var(--western)}
+.feedback-modal .char-count{text-align:right;font-size:0.8em;color:var(--text-light);margin-top:4px}
+.feedback-modal .feedback-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.feedback-modal .feedback-actions button{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.9em;font-weight:600;transition:all 0.2s}
+.feedback-modal .btn-cancel{background:var(--border);color:var(--text)}
+.feedback-modal .btn-cancel:hover{background:#ccc}
+.feedback-modal .btn-submit{background:linear-gradient(135deg,#3498db,#2980b9);color:#fff}
+.feedback-modal .btn-submit:hover{box-shadow:0 4px 12px rgba(52,152,219,0.4)}
+.feedback-modal .btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+.feedback-modal .feedback-status{margin-top:12px;padding:10px;border-radius:8px;font-size:0.85em;text-align:center;display:none}
+.feedback-modal .feedback-status.success{display:block;background:#eafaf1;color:#27ae60;border:1px solid rgba(39,174,96,0.2)}
+.feedback-modal .feedback-status.error{display:block;background:#fdecea;color:#e74c3c;border:1px solid rgba(231,76,60,0.2)}
+.feedback-modal .turnstile-wrap{margin-top:12px}
+@media(max-width:480px){
+.feedback-modal{width:100%;max-width:100%}
+.feedback-btn{bottom:16px;right:16px;width:48px;height:48px}
+}
 </style>
 </head>
 <body>
@@ -841,6 +869,72 @@ function launchConfetti(){
     document.body.appendChild(c);
     setTimeout(()=>c.remove(),4500);
   }
+}
+</script>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<button class="feedback-btn" onclick="document.getElementById('feedbackOverlay').classList.add('active')" aria-label="피드백 보내기">
+<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+</button>
+
+<div class="feedback-overlay" id="feedbackOverlay" onclick="if(event.target===this)this.classList.remove('active')">
+<div class="feedback-modal">
+<h3>피드백 보내기</h3>
+<p>개선 사항이나 의견을 남겨주세요. 익명으로 전송됩니다.</p>
+<textarea id="feedbackBody" placeholder="피드백 내용을 입력해주세요..." maxlength="2000" oninput="document.getElementById('charCount').textContent=this.value.length+'/2000'"></textarea>
+<div class="char-count" id="charCount">0/2000</div>
+<div class="turnstile-wrap" id="turnstileWrap"></div>
+<div class="feedback-actions">
+<button class="btn-cancel" onclick="closeFeedback()">취소</button>
+<button class="btn-submit" id="feedbackSubmit" onclick="submitFeedback()">보내기</button>
+</div>
+<div class="feedback-status" id="feedbackStatus"></div>
+</div>
+</div>
+
+<script>
+let turnstileWidgetId;
+function renderTurnstile(){
+  if(typeof turnstile!=='undefined'&&!turnstileWidgetId){
+    turnstileWidgetId=turnstile.render('#turnstileWrap',{sitekey:'0x4AAAAAADBIvWafxWnKEs21',theme:'light',size:'flexible'});
+  }
+}
+const tObs=new MutationObserver(()=>{if(typeof turnstile!=='undefined'){renderTurnstile();tObs.disconnect()}});
+tObs.observe(document.head,{childList:true,subtree:true});
+setTimeout(()=>{renderTurnstile()},2000);
+
+async function submitFeedback(){
+  const body=document.getElementById('feedbackBody').value.trim();
+  const status=document.getElementById('feedbackStatus');
+  const btn=document.getElementById('feedbackSubmit');
+  status.className='feedback-status';status.style.display='none';
+  if(!body){status.textContent='내용을 입력해주세요';status.className='feedback-status error';status.style.display='block';return}
+  const token=turnstile.getResponse(turnstileWidgetId);
+  if(!token){status.textContent='인증 체크박스를 완료해주세요';status.className='feedback-status error';status.style.display='block';return}
+  btn.disabled=true;btn.textContent='전송 중...';
+  try{
+    const res=await fetch('https://vpcozjkbossofcnarspv.supabase.co/functions/v1/create-issue',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({body,turnstile_token:token})
+    });
+    const data=await res.json();
+    if(res.ok){
+      status.textContent='피드백이 전송되었습니다. 감사합니다!';status.className='feedback-status success';status.style.display='block';
+      document.getElementById('feedbackBody').value='';document.getElementById('charCount').textContent='0/2000';
+      turnstile.reset(turnstileWidgetId);
+      setTimeout(()=>closeFeedback(),2000);
+    }else{
+      status.textContent=data.error||'전송에 실패했습니다';status.className='feedback-status error';status.style.display='block';
+      turnstile.reset(turnstileWidgetId);
+    }
+  }catch(e){
+    status.textContent='네트워크 오류가 발생했습니다';status.className='feedback-status error';status.style.display='block';
+  }finally{btn.disabled=false;btn.textContent='보내기'}
+}
+function closeFeedback(){
+  document.getElementById('feedbackOverlay').classList.remove('active');
+  document.getElementById('feedbackStatus').style.display='none';
 }
 </script>
 </body>
