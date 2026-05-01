@@ -655,6 +655,44 @@ if(vegKw.some(k => lower.includes(k))) return 'vegetable';
 return 'etc';
 }
 
+function parseAmount(amtStr){
+if(!amtStr || amtStr === '적당량') return null;
+const m = amtStr.match(/^(\d+(?:\.\d+)?(?:\/\d+)?)\s*(.*)$/);
+if(!m) return null;
+let numStr = m[1];
+let unit = m[2].trim();
+unit = unit.replace(/\s*\([^)]*\)\s*/g, '').trim();
+unit = unit.replace(/\s*[+&].*$/, '').trim();
+let num;
+if(numStr.includes('/')){
+const [a,b] = numStr.split('/').map(Number);
+num = a/b;
+} else {
+num = parseFloat(numStr);
+}
+if(isNaN(num)) return null;
+return {num, unit};
+}
+
+function sumAmounts(amounts){
+const byUnit = {};
+const order = [];
+let freeformCount = 0;
+amounts.forEach(a => {
+const parsed = parseAmount(a);
+if(!parsed){ freeformCount++; return; }
+if(!(parsed.unit in byUnit)){ byUnit[parsed.unit] = 0; order.push(parsed.unit); }
+byUnit[parsed.unit] += parsed.num;
+});
+const parts = order.map(u => {
+const n = byUnit[u];
+const display = Number.isInteger(n) ? n : Math.round(n*10)/10;
+return display + (u ? u : '');
+});
+if(freeformCount > 0) parts.push('적당량');
+return parts.length ? parts.join(' + ') : '적당량';
+}
+
 function generateShoppingList(){
 const activePlan = getActiveWeeklyPlan();
 const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
@@ -672,7 +710,6 @@ const recipe = DATA.recipes.find(r => r.name === recipeName);
 if(!recipe) return;
 recipe.ingredients.forEach(ing => {
 const cat = classifyIngredient(ing);
-// Try to extract item name (everything before amount patterns)
 const match = ing.match(/^(.+?)\s+(\d[\d\/\.]*\s*.+)$/);
 let itemName = ing;
 let amount = '';
@@ -689,12 +726,11 @@ seen[cat][itemName] = {item: itemName, amounts: [amount || '적당량']};
 });
 });
 
-// Convert to shopping list format
 const result = {};
 Object.keys(categorized).forEach(cat => {
 result[cat] = Object.values(seen[cat]).map(entry => ({
 item: entry.item,
-amount: entry.amounts.join(', ')
+amount: sumAmounts(entry.amounts)
 }));
 });
 return result;
@@ -801,9 +837,9 @@ document.getElementById('regenerateBtn').addEventListener('click', () => {
 const mode = document.getElementById('planMode').value;
 const plan = generateWeeklyPlan(mode);
 saveWeeklyPlan(plan, mode);
+localStorage.removeItem('mealprep-shopping');
 renderWeekly();
 renderShopping();
-loadShoppingState();
 // Open all shopping categories
 document.querySelectorAll('.shopping-header').forEach(h => { h.classList.add('open'); h.nextElementSibling.classList.add('open'); });
 });
