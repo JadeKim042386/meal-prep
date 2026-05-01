@@ -1,8 +1,8 @@
 {
   "id": "/meal-prep/",
-  "name": "밀프랩 가이드 — 주간 식단표 자동 생성기",
+  "name": "밀프랩 플래너 - Meal Prep Planner",
   "short_name": "밀프랩",
-  "description": "98가지 레시피로 주간 식단표를 자동 생성하고 장보기 리스트까지 한 번에. 조리 순서·요리 팁·대체 재료 정보 제공.",
+  "description": "98가지 한식·양식 레시피로 주간 식단표·장보기 리스트를 자동 생성. 조리 순서·요리 팁·대체 재료 정보 제공. Auto weekly meal plan, shopping list & cooking guide with 98 Korean recipes.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
