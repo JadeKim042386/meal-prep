@@ -1,14 +1,17 @@
 {
+  "id": "/meal-prep/",
   "name": "밀프랩 가이드 — 주간 식단표 자동 생성기",
   "short_name": "밀프랩",
   "description": "98가지 레시피로 주간 식단표를 자동 생성하고 장보기 리스트까지 한 번에. 조리 순서·요리 팁·대체 재료 정보 제공.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#fdf6e3",
   "theme_color": "#2c3e50",
   "lang": "ko",
+  "dir": "ltr",
   "categories": ["food", "lifestyle", "productivity"],
   "icons": [
     {
@@ -22,6 +25,29 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "주간 식단표",
+      "short_name": "식단표",
+      "description": "이번 주 자동 생성된 식단표 보기",
+      "url": "./#section-weekly",
+      "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+    },
+    {
+      "name": "장보기 리스트",
+      "short_name": "장보기",
+      "description": "이번 주 식단의 장보기 리스트",
+      "url": "./#section-shopping",
+      "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+    },
+    {
+      "name": "조리 순서",
+      "short_name": "조리 순서",
+      "description": "효율적인 조리 순서와 밑준비 가이드",
+      "url": "./#section-cooking",
+      "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}]
     }
   ]
 }
