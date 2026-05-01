@@ -255,6 +255,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .tip-card-img svg{width:84px;height:84px}
 .tip-video{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:7px 14px;background:#ff0000;color:#fff;border-radius:18px;font-size:0.83em;font-weight:600;text-decoration:none;transition:all 0.2s}
 .tip-video:hover{background:#cc0000;transform:translateY(-1px);box-shadow:0 3px 10px rgba(255,0,0,0.25)}
+.related-tips{margin-top:18px;background:#fdfaf3;border-radius:12px;padding:14px 16px;border:1px solid #f0e9d8}
+.related-tips summary{cursor:pointer;font-weight:700;font-size:0.98em;color:var(--text);padding:4px 0;list-style:none;display:flex;align-items:center;gap:6px}
+.related-tips summary::-webkit-details-marker{display:none}
+.related-tips summary::after{content:'▼';margin-left:auto;font-size:0.7em;color:var(--text-light);transition:transform 0.2s}
+.related-tips[open] summary::after{transform:rotate(180deg)}
+.related-tips-list{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+.related-tip{padding:12px 14px;background:#fff;border-radius:10px;border-left:3px solid var(--text-light)}
+.related-tip[data-tipcat="knife"]{border-left-color:#e74c3c}
+.related-tip[data-tipcat="prep"]{border-left-color:#27ae60}
+.related-tip[data-tipcat="technique"]{border-left-color:#e67e22}
+.related-tip[data-tipcat="sauce"]{border-left-color:#9b59b6}
+.related-tip[data-tipcat="storage"]{border-left-color:#3498db}
+.related-tip[data-tipcat="trouble"]{border-left-color:#16a085}
+.related-tip-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.related-tip-head strong{font-size:0.96em;color:var(--text)}
+.related-tip-cat{font-size:0.75em;color:var(--text-light);background:#f5f3ef;padding:2px 8px;border-radius:10px}
+.related-tip-body{font-size:0.88em;line-height:1.55;color:var(--text);margin-bottom:8px}
+.related-tip-tip{display:block;background:#fef9e7;border-radius:6px;padding:7px 10px;font-size:0.82em;color:#7d6608;border-left:2px solid #f1c40f;line-height:1.5}
+.related-tip-tip::before{content:'💡 '}
 .modal .steps-list{list-style:none;padding-left:0;counter-reset:step-counter}
 .modal .steps-list li{counter-increment:step-counter;padding:10px 0 10px 48px;position:relative;line-height:1.7;border-bottom:1px solid #f5f3ef}
 .modal .steps-list li:last-child{border-bottom:none}
@@ -689,6 +708,19 @@ return `<li><input type="checkbox" onchange="this.parentElement.classList.toggle
 }).join('')}</ul>
 <h4>\ud83d\udc68\u200d\ud83c\udf73 \uc870\ub9ac\ubc95</h4>
 <ol class="steps-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+${(() => {
+const related = findRelatedTips(r);
+if(related.length === 0) return '';
+return `<details class="related-tips" open>
+<summary>\ud83d\udca1 \uad00\ub828 \uc694\ub9ac \ud301 (${related.length})</summary>
+<div class="related-tips-list">${related.map(t => `
+<div class="related-tip" data-tipcat="${t.catKey}">
+<div class="related-tip-head"><strong>${t.title}</strong><span class="related-tip-cat">${t.catLabel}</span></div>
+<div class="related-tip-body">${t.body}</div>
+<span class="related-tip-tip">${t.tip}</span>
+</div>`).join('')}</div>
+</details>`;
+})()}
 ${r.storageInfo ? `<div class="storage">\ud83d\udce6 <strong>\ubcf4\uad00\ubc95:</strong> ${r.storageInfo}</div>` : ''}
 ${r.source ? `<a class="source-link" href="${r.source}" target="_blank" rel="noopener">\ud83d\udd17 ${r.sourceName || '\ucd9c\ucc98 \ubcf4\uae30'}</a>` : ''}
 <div class="tag-list">${(r.tags||[]).map(t => `<span>#${t}</span>`).join('')}</div>`;
@@ -1047,6 +1079,68 @@ trouble: {label: '🛟 문제 해결', items: [
 {title:'양념이 골고루 안 됐을 때', body:'재료 물기를 제거 후 양념과 버무리고 10분 두면 속까지 스며든다.', tip:'무침은 손으로 조물조물해야 흡수가 빠름.'}
 ]}
 };
+// 레시피 텍스트에서 관련 팁을 매칭하기 위한 키워드 맵
+const TIP_KEYWORDS = {
+'채썰기 (Julienne)':['채썰','채 썰','채 썬'],
+'깍둑썰기 (큐브)':['깍둑','한입 크기','큐브','깍둑썰기'],
+'어슷썰기 (대각선)':['어슷'],
+'다지기 (마늘·양파·고추)':['다진','다지','다져'],
+'편썰기 (마늘·생강)':['편썰','편으로','편 썬'],
+'송송썰기 (대파·쪽파)':['송송'],
+'반달썰기 (애호박·오이)':['반달'],
+'은행잎썰기 (무·당근)':['은행잎'],
+'결 따라·결 반대로 썰기 (육류)':['결 따라','결 반대','결대로'],
+'고기 핏물 빼기':['핏물'],
+'누린내·잡내 제거':['누린내','잡내','청주','맛술'],
+'데치기 시간':['데친','데쳐','데치'],
+'콩 불리기':['병아리콩','렌틸콩','검은콩'],
+'쌀 불리기':['쌀을 불','불린 쌀','불려'],
+'두부 물기 빼기':['두부의 물','두부를 으깨','으깬 두부','단단한 두부'],
+'새우 손질':['새우 손질','새우 껍질','새우의 껍질'],
+'생선 비린내 제거':['비린내','비린'],
+'버섯 손질':['버섯을 씻','버섯 손질','표고'],
+'김치 신맛 줄이기':['신김치','묵은지'],
+'냉동 고기 해동':['해동'],
+'양파 매운맛 빼기':['양파를 찬물','양파.*매운'],
+'팬 충분히 예열':['팬을 달','팬에 기름을 두르고'],
+'센·중·약불 구분':['센불','중불','약불'],
+'시어링 (마이야르)':['노릇하게','앞뒤로 노릇','겉면을 노릇','시어'],
+'볶음 투입 순서':['볶다가','함께 볶','센불에서'],
+'데쳐서 색 살리기':['끓는 물에','데친','얼음물'],
+'양념 투입은 끝물에':['양념장을 부','졸인다','마무리한다'],
+'오븐 예열 필수':['오븐을','예열한다','예열하고'],
+'시트팬 겹치지 않게':['시트팬','오븐팬','펼친다','펼치고'],
+'원팬·원팟 액체 비율':['원팟','원팬','육수','브로스'],
+'면 알덴테 굽기':['면을 삶','파스타를 삶','알덴테','오르조'],
+'쌀밥 비율과 뜸':['쌀을 씻','밥을 짓','뜸을','밥물'],
+'고기 휴지(rest)':['휴지','5분간 둔다','잠시 둔다'],
+'소스 농도는 전분물':['전분','전분물','걸쭉']
+};
+
+function findRelatedTips(recipe){
+const text = (recipe.steps||[]).join(' ') + ' ' + (recipe.name||'') + ' ' + (recipe.ingredients||[]).join(' ');
+const matched = new Set();
+const result = [];
+Object.entries(COOKING_TIPS).forEach(([catKey, cat]) => {
+cat.items.forEach(tip => {
+if(matched.has(tip.title)) return;
+const keywords = TIP_KEYWORDS[tip.title];
+if(!keywords || keywords.length === 0) return;
+const hit = keywords.some(k => {
+if(k.includes('.*')){
+try{ return new RegExp(k).test(text); }catch(e){ return false; }
+}
+return text.includes(k);
+});
+if(hit){
+matched.add(tip.title);
+result.push({...tip, catKey, catLabel: cat.label});
+}
+});
+});
+return result;
+}
+
 let currentTipCat = 'knife';
 function renderCookingTips(){
 const cats = Object.keys(COOKING_TIPS);
