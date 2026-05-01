@@ -471,6 +471,57 @@ if(stripped && stripped !== itemName && SUBSTITUTES[stripped]) return SUBSTITUTE
 return null;
 }
 
+// 갯수 기반 재료의 무게 추정 (단위당 g)
+const WEIGHT_HINTS = {
+'양파':{개:200},'적양파':{개:180},'당근':{개:150},'감자':{개:150},'고구마':{개:250},
+'토마토':{개:150},'방울토마토':{개:15},'파프리카':{개:150},'피망':{개:80},
+'오이':{개:200},'애호박':{개:250},'주키니호박':{개:300},'가지':{개:200},
+'아보카도':{개:200},'레몬':{개:100},'라임':{개:60},'사과':{개:200},'바나나':{개:100},
+'달걀':{개:60},'계란':{개:60},
+'두부':{모:300},'단단한 두부':{모:300},'연두부':{모:250},
+'마늘':{쪽:5,톨:80},'대파':{대:80},'쪽파':{줄기:5,대:5},
+'청양고추':{개:5},'고추':{개:8},'할라피뇨':{개:15},'페퍼론치노':{개:1},
+'브로콜리':{송이:400},'양배추':{통:1000},'양상추':{통:500},'배추':{통:2000},
+'셀러리':{줄기:40},
+'또띠아':{장:30},'통밀 또띠아':{장:35},'라면사리':{개:110},
+'스팸':{캔:200},'참치캔':{캔:100},'옥수수캔':{캔:280},
+'검은콩 통조림':{캔:400},'병아리콩 통조림':{캔:400},'코코넛밀크':{캔:400},
+'소시지':{개:70},'비엔나 소시지':{개:10},'햄':{개:30},'미트볼':{개:30},
+'밥':{공기:200,인분:200,컵:200},'현미밥':{인분:200,공기:200},
+'오트밀':{스쿱:30},'프로틴파우더':{스쿱:30},
+'단호박':{통:800},'표고버섯':{송이:30},'양송이 버섯':{개:15},
+'시금치':{줌:50},'콩나물':{줌:50},'미역':{줌:10},'김':{장:2},
+'바질 잎':{컵:30},'생강':{톨:80,개:80}
+};
+
+const VOLUME_UNITS = new Set(['g','kg','ml','L','컵','큰술','작은술']);
+
+function appendWeight(itemName, amount){
+if(!amount || !itemName) return amount;
+const m = amount.match(/^(\d+(?:\.\d+)?(?:\/\d+)?)\s*(.*)$/);
+if(!m) return amount;
+const numStr = m[1];
+let unit = m[2].trim();
+const trailing = unit.match(/\s*\([^)]*\)\s*$/);
+const trailingText = trailing ? trailing[0] : '';
+unit = unit.replace(/\s*\([^)]*\)\s*/g, '').trim().replace(/\s*[+&].*$/, '').trim();
+if(VOLUME_UNITS.has(unit)) return amount;
+const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+const hint = WEIGHT_HINTS[itemName] || WEIGHT_HINTS[stripped];
+if(!hint || !(unit in hint)) return amount;
+let num;
+if(numStr.includes('/')){
+const [a,b] = numStr.split('/').map(Number);
+num = a/b;
+} else {
+num = parseFloat(numStr);
+}
+if(isNaN(num)) return amount;
+const totalG = Math.round(num * hint[unit]);
+const display = (Number.isInteger(num) ? num : (Math.round(num*100)/100)) + unit;
+return display + trailingText + ' (약 ' + totalG + 'g)';
+}
+
 let currentCat = 'all';
 let searchQuery = '';
 
@@ -573,9 +624,11 @@ document.getElementById('modal').innerHTML = `
 <ul class="ingredient-list">${r.ingredients.map(ing => {
 const m = ing.match(/^(.+?)\s+(\d[\d\/\.]*\s*.+)$/);
 const name = m ? m[1].trim() : ing.trim();
+const amount = m ? m[2].trim() : '';
+const display = amount ? `${name} ${appendWeight(name, amount)}` : ing;
 const subs = findSubstitutes(name);
 const subHtml = subs ? `<span class="sub">${subs.join(', ')}</span>` : '';
-return `<li><input type="checkbox" onchange="this.parentElement.classList.toggle('checked')"><div class="ing-row"><span>${ing}</span>${subHtml}</div></li>`;
+return `<li><input type="checkbox" onchange="this.parentElement.classList.toggle('checked')"><div class="ing-row"><span>${display}</span>${subHtml}</div></li>`;
 }).join('')}</ul>
 <h4>\ud83d\udc68\u200d\ud83c\udf73 \uc870\ub9ac\ubc95</h4>
 <ol class="steps-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
@@ -755,7 +808,7 @@ if(isNaN(num)) return null;
 return {num, unit};
 }
 
-function sumAmounts(amounts){
+function sumAmounts(amounts, itemName){
 const byUnit = {};
 const order = [];
 let freeformCount = 0;
@@ -768,7 +821,8 @@ byUnit[parsed.unit] += parsed.num;
 const parts = order.map(u => {
 const n = byUnit[u];
 const display = Number.isInteger(n) ? n : Math.round(n*10)/10;
-return display + (u ? u : '');
+const part = display + (u ? u : '');
+return itemName ? appendWeight(itemName, part) : part;
 });
 if(freeformCount > 0) parts.push('적당량');
 return parts.length ? parts.join(' + ') : '적당량';
@@ -813,7 +867,7 @@ const result = {};
 Object.keys(categorized).forEach(cat => {
 result[cat] = Object.values(seen[cat]).map(entry => ({
 item: entry.item,
-amount: sumAmounts(entry.amounts)
+amount: sumAmounts(entry.amounts, entry.item)
 }));
 });
 return result;
