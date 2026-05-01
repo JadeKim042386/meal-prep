@@ -956,10 +956,10 @@ if(r) used.set(name, {recipe: r, slots: [slot]});
 });
 const recipes = [...used.values()].map(({recipe, slots}) => ({...recipe, _phase: classifyCookingPhase(recipe), _slots: slots}));
 const phases = [
-{n:1, title:'🔥 1단계 — 장시간 조리 (제일 먼저)', desc:'끓이는 동안 다른 요리를 동시에 진행할 수 있어 시간 효율이 가장 큽니다.'},
-{n:2, title:'🥘 2단계 — 오븐·시트팬 (예열 후)', desc:'오븐 예열 + 굽는 30~40분 동안 채소 손질과 양념장 준비를 끝낼 수 있습니다.'},
-{n:3, title:'🍳 3단계 — 빠른 볶음·구이 (마지막에)', desc:'센불에서 빠르게 조리하므로 다른 작업이 끝난 뒤 한 번에 처리합니다.'},
-{n:4, title:'🥗 4단계 — 주중 추가 조리 (신선도 중요)', desc:'회·생채소 위주는 만든 당일에 먹어야 하므로 먹기 전날 또는 당일에 따로 조리합니다.'},
+{n:1, icon:'🔥', label:'장시간 조리 (제일 먼저)', desc:'끓이는 동안 다른 요리를 동시에 진행할 수 있어 시간 효율이 가장 큽니다.'},
+{n:2, icon:'🥘', label:'오븐·시트팬 (예열 후)', desc:'오븐 예열 + 굽는 30~40분 동안 채소 손질과 양념장 준비를 끝낼 수 있습니다.'},
+{n:3, icon:'🍳', label:'빠른 볶음·구이 (마지막에)', desc:'센불에서 빠르게 조리하므로 다른 작업이 끝난 뒤 한 번에 처리합니다.'},
+{n:4, icon:'🥗', label:'주중 추가 조리 (신선도 중요)', desc:'회·생채소 위주는 만든 당일에 먹어야 하므로 먹기 전날 또는 당일에 따로 조리합니다.'},
 ];
 let html = `<div class="cook-tip"><strong>💡 D-1 (조리 전날) 밑준비 체크리스트</strong><ul>
 <li>양념장 미리 만들어 냉장 보관 (간장·식초·미소 베이스)</li>
@@ -968,17 +968,17 @@ let html = `<div class="cook-tip"><strong>💡 D-1 (조리 전날) 밑준비 체
 <li>곡물(쌀·퀴노아) 씻어서 30분 이상 불리기</li>
 <li>밀프랩 용기와 라벨, 보관용 스티커 준비</li>
 </ul></div>`;
-phases.forEach(phase => {
-const items = recipes.filter(r => r._phase === phase.n);
-items.sort((a,b) => (b.cookTime||0) - (a.cookTime||0));
-const body = items.length ? `<div class="cook-phase-items">${items.map(r => `
+const activePhases = phases.map(p => ({...p, items: recipes.filter(r => r._phase === p.n).sort((a,b) => (b.cookTime||0) - (a.cookTime||0))}))
+.filter(p => p.items.length > 0);
+activePhases.forEach((phase, idx) => {
+const displayN = idx + 1;
+html += `<div class="cook-phase" data-phase="${phase.n}">
+<div class="cook-phase-header"><h3>${phase.icon} ${displayN}단계 — ${phase.label}</h3><p>${phase.desc}</p></div>
+<div class="cook-phase-items">${phase.items.map(r => `
 <div class="cook-item" data-cat="${r.displayCategory||''}" onclick="openModal('${r.name.replace(/'/g,"\\'")}')">
 <div class="cook-item-name">${r.name}</div>
 <div class="cook-item-meta">⏱ ${r.cookTime}분 · ${r.servings||4}인분 · ${r._slots.join(', ')}</div>
-</div>`).join('')}</div>` : `<div class="cook-empty">이번 식단에 해당 단계 요리 없음</div>`;
-html += `<div class="cook-phase" data-phase="${phase.n}">
-<div class="cook-phase-header"><h3>${phase.title}</h3><p>${phase.desc}</p></div>
-${body}
+</div>`).join('')}</div>
 </div>`;
 });
 const totalMin = recipes.reduce((s, r) => s + (r.cookTime || 0), 0);
