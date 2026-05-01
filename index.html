@@ -207,6 +207,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .modal .ingredient-list li:hover{background:rgba(46,204,113,0.06)}
 .modal .ingredient-list li input{width:16px;height:16px;accent-color:var(--mediterranean)}
 .modal .ingredient-list li.checked{text-decoration:line-through;color:var(--text-light)}
+.modal .ingredient-list .ing-row{display:flex;flex-direction:column;gap:2px;flex:1}
+.modal .ingredient-list .sub{font-size:0.78em;color:#9a8d72;margin-left:2px}
+.modal .ingredient-list .sub::before{content:'↪ 대체: ';color:#b6a98c}
 .modal .steps-list{list-style:none;padding-left:0;counter-reset:step-counter}
 .modal .steps-list li{counter-increment:step-counter;padding:10px 0 10px 48px;position:relative;line-height:1.7;border-bottom:1px solid #f5f3ef}
 .modal .steps-list li:last-child{border-bottom:none}
@@ -396,6 +399,78 @@ const DAY_NAMES = {monday:'\uc6d4',tuesday:'\ud654',wednesday:'\uc218',thursday:
 const SHOP_ICONS = {meat:'\ud83e\udd69',vegetable:'\ud83e\udd2c',dairy:'\ud83e\uddc0',grain:'\ud83c\udf5a',sauce:'\ud83e\uddc2',etc:'\ud83d\udce6'};
 const SHOP_NAMES = {meat:'\uc815\uc721 / \ub2e8\ubc31\uc9c8',vegetable:'\ucc44\uc18c / \uacfc\uc77c',dairy:'\uc720\uc81c\ud488 / \ub2ec\uac78',grain:'\uace1\ubb3c / \ud30c\uc2a4\ud0c0',sauce:'\uc591\ub150 / \uc18c\uc2a4',etc:'\uae30\ud0c0'};
 
+// 재료 대체 정보 (모달 표시용)
+const SUBSTITUTES = {
+'닭가슴살':['닭다리살','닭허벅지살'],'닭다리살':['닭가슴살','닭허벅지살'],'닭허벅지살':['닭다리살','닭가슴살'],
+'닭다리 다짐육':['닭가슴살 다짐육','돼지고기 다짐육'],'돼지고기 다짐육':['닭다리 다짐육','소고기 다짐육'],
+'소고기':['돼지고기','닭가슴살'],'소고기 국거리':['소고기 양지','소고기 사태'],
+'돼지고기 앞다리살':['돼지고기 목살','돼지고기 뒷다리살'],'돼지고기 목살':['돼지고기 앞다리살','삼겹살'],
+'삼겹살':['돼지고기 목살','오겹살'],'소갈비':['소갈비살','돼지갈비'],
+'새우':['오징어','관자'],'대하':['새우'],'연어':['고등어','참치'],'연어 필렛':['연어','대구 필렛'],
+'연어회':['참치회','광어회'],'참치캔':['연어캔','닭가슴살캔'],
+'두부':['단단한 두부','연두부'],'단단한 두부':['두부','순두부(물기 제거)'],
+'계란':['달걀'],'달걀':['계란'],
+'간장':['진간장','국간장(절반)'],'국간장':['간장(1.5배)','액젓'],'진간장':['간장','왜간장'],
+'미림':['청주','맛술'],'맛술':['미림','청주'],'청주':['미림','화이트와인'],
+'올리고당':['꿀','물엿','메이플시럽'],'꿀':['올리고당','메이플시럽','설탕'],'물엿':['올리고당','꿀'],
+'설탕':['꿀','올리고당','대체당'],
+'고추장':['쌈장(절반)','된장+고춧가루'],'된장':['미소된장'],'미소된장':['된장'],'미소 페이스트':['된장','미소된장'],
+'두반장':['고추장+간장','쌈장'],'굴소스':['간장+설탕','피시소스'],'피시소스':['간장+멸치액젓'],
+'식초':['레몬즙','사과식초'],'레몬즙':['라임즙','식초'],'라임즙':['레몬즙'],
+'참기름':['들기름'],'들기름':['참기름'],'식용유':['카놀라유','포도씨유'],
+'올리브오일':['아보카도오일','카놀라유'],'버터':['마가린','식용유(절반)'],
+'발사믹 글레이즈':['발사믹식초+꿀'],'바질 페스토':['시판 페스토','루꼴라 페스토'],
+'생크림':['우유+버터','코코넛크림'],'우유':['두유','아몬드밀크','오트밀크'],'코코넛밀크':['생크림','두유'],
+'그릭요거트':['플레인 요거트(물기 제거)','사워크림'],'사워크림':['그릭요거트'],
+'파마산 치즈':['그라나 파다노','페코리노'],'파르메산 치즈':['파마산 치즈','그라나 파다노'],
+'모짜렐라 치즈':['스트링치즈','슈레드치즈'],'페타치즈':['리코타','두부(물기 제거)'],
+'브로콜리':['콜리플라워','아스파라거스'],'콜리플라워':['브로콜리'],
+'시금치':['청경채','근대','루꼴라'],'양배추':['배추','양상추'],
+'양파':['적양파','대파'],'적양파':['양파'],'대파':['쪽파','양파'],'쪽파':['대파','실파'],
+'마늘':['다진마늘(1쪽≈1작은술)','갈릭파우더'],'다진마늘':['마늘(1쪽=1작은술)','갈릭파우더'],
+'생강':['생강가루','다진 생강'],'생강가루':['생강(1cm)'],
+'파프리카':['피망'],'피망':['파프리카'],
+'주키니호박':['애호박','오이'],'애호박':['주키니호박'],
+'감자':['고구마'],'고구마':['감자'],'당근':['단호박'],
+'아보카도':['망고','오이'],'오이':['주키니호박'],
+'토마토':['방울토마토','캔토마토'],'방울토마토':['토마토(썰어서)'],
+'바질':['깻잎','루꼴라'],'파슬리':['고수','바질'],'고수':['파슬리'],'딜':['파슬리'],
+'셀러리':['오이','대파(흰부분)'],'아스파라거스':['브로콜리','그린빈'],
+'버섯':['표고버섯','느타리버섯'],
+'퀴노아':['현미','쿠스쿠스'],'현미':['백미','퀴노아'],'오트밀':['보리','귀리'],
+'쿠스쿠스':['퀴노아','쌀'],'오르조 파스타':['쌀','쿠스쿠스'],
+'펜네 파스타':['푸실리','리가토니'],'페투치네':['링귀네','스파게티'],
+'소바면':['중면','우동면'],'또띠아':['통밀 또띠아','랩'],'통밀 또띠아':['또띠아','상추(저탄수)'],
+'라면사리':['우동면','소면'],
+'검은콩 통조림':['병아리콩 통조림','강낭콩 통조림'],'병아리콩':['렌틸콩','검은콩'],
+'렌틸콩':['병아리콩','검은콩'],'에다마메':['풋콩','완두콩'],
+'아몬드':['호두','캐슈넛'],'호두':['아몬드','피칸'],'치아씨드':['아마씨'],
+'오레가노':['바질','타임'],'타임':['오레가노','로즈마리'],
+'큐민':['커민','카레가루'],'커민':['큐민'],
+'파프리카 파우더':['고춧가루(단맛)'],'카레가루':['큐민+터메릭+코리앤더'],
+'강황':['터메릭'],'터메릭':['강황'],'고춧가루':['파프리카 파우더','칠리파우더'],
+'햄':['스팸','베이컨'],'스팸':['햄','소시지'],'베이컨':['햄'],
+'비엔나 소시지':['프랑크 소시지'],'소시지':['비엔나','프랑크'],
+'치킨 브로스':['치킨스톡','물+치킨파우더'],'치킨스톡':['치킨 브로스'],
+'묵은지':['김치(잘 익은 것)'],'김치':['묵은지'],'어묵':['게맛살'],
+'잔멸치':['멸치','디포리'],'프로틴파우더':['그릭요거트(추가)','두유']
+};
+
+// 장보기 통합용 별칭 (장보기 시 동일 품목으로 합산)
+const SHOP_ALIASES = {
+'계란':'달걀','진간장':'간장','왜간장':'간장','단단한 두부':'두부','대하':'새우',
+'미소된장':'된장','강황':'터메릭','큐민':'커민','파르메산 치즈':'파마산 치즈',
+'잔멸치':'멸치','적양파':'양파','통밀 또띠아':'또띠아'
+};
+
+function findSubstitutes(itemName){
+if(!itemName) return null;
+if(SUBSTITUTES[itemName]) return SUBSTITUTES[itemName];
+const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+if(stripped && stripped !== itemName && SUBSTITUTES[stripped]) return SUBSTITUTES[stripped];
+return null;
+}
+
 let currentCat = 'all';
 let searchQuery = '';
 
@@ -495,7 +570,13 @@ document.getElementById('modal').innerHTML = `
 <div><strong>${r.servings}\uc778\ubd84</strong>\ubd84\ub7c9</div>
 </div>
 <h4>\ud83e\udd62 \uc7ac\ub8cc</h4>
-<ul class="ingredient-list">${r.ingredients.map(ing => `<li><input type="checkbox" onchange="this.parentElement.classList.toggle('checked')"><span>${ing}</span></li>`).join('')}</ul>
+<ul class="ingredient-list">${r.ingredients.map(ing => {
+const m = ing.match(/^(.+?)\s+(\d[\d\/\.]*\s*.+)$/);
+const name = m ? m[1].trim() : ing.trim();
+const subs = findSubstitutes(name);
+const subHtml = subs ? `<span class="sub">${subs.join(', ')}</span>` : '';
+return `<li><input type="checkbox" onchange="this.parentElement.classList.toggle('checked')"><div class="ing-row"><span>${ing}</span>${subHtml}</div></li>`;
+}).join('')}</ul>
 <h4>\ud83d\udc68\u200d\ud83c\udf73 \uc870\ub9ac\ubc95</h4>
 <ol class="steps-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
 ${r.storageInfo ? `<div class="storage">\ud83d\udce6 <strong>\ubcf4\uad00\ubc95:</strong> ${r.storageInfo}</div>` : ''}
@@ -717,10 +798,12 @@ if(match){
 itemName = match[1].trim();
 amount = match[2].trim();
 }
-if(seen[cat][itemName]){
-seen[cat][itemName].amounts.push(amount || '적당량');
+const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+const canonical = SHOP_ALIASES[itemName] || SHOP_ALIASES[stripped] || itemName;
+if(seen[cat][canonical]){
+seen[cat][canonical].amounts.push(amount || '적당량');
 } else {
-seen[cat][itemName] = {item: itemName, amounts: [amount || '적당량']};
+seen[cat][canonical] = {item: canonical, amounts: [amount || '적당량']};
 }
 });
 });
