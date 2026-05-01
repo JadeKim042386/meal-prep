@@ -709,7 +709,10 @@ return `<li><input type="checkbox" onchange="this.parentElement.classList.toggle
 <h4>\ud83d\udc68\u200d\ud83c\udf73 \uc870\ub9ac\ubc95</h4>
 <ol class="steps-list">${r.steps.map(s => {
 const tips = findTipsForText(s);
-const tipBlock = tips.length ? `<details class="step-tip"><summary>\ud83d\udca1 Tip (${tips.length})</summary><div class="step-tip-list">${tips.map(t => `<div class="step-tip-item" data-tipcat="${t.catKey}"><div class="step-tip-head"><strong>${t.title}</strong><span class="step-tip-cat">${t.catLabel}</span></div><div class="step-tip-body">${t.body}</div><span class="step-tip-bulb">${t.tip}</span></div>`).join('')}</div></details>` : '';
+const tipBlock = tips.length ? `<details class="step-tip"><summary>\ud83d\udca1 Tip (${tips.length})</summary><div class="step-tip-list">${tips.map(t => {
+const vid = t.videoQuery ? `<a class="tip-video" href="https://www.youtube.com/results?search_query=${encodeURIComponent(t.videoQuery)}" target="_blank" rel="noopener">\u25B6 \uC720\uD29C\uBE0C \uC601\uC0C1 \uBCF4\uAE30</a>` : '';
+return `<div class="step-tip-item" data-tipcat="${t.catKey}"><div class="step-tip-head"><strong>${t.title}</strong><span class="step-tip-cat">${t.catLabel}</span></div><div class="step-tip-body">${t.body}</div><span class="step-tip-bulb">${t.tip}</span>${vid}</div>`;
+}).join('')}</div></details>` : '';
 return `<li>${s}${tipBlock}</li>`;
 }).join('')}</ol>
 ${r.storageInfo ? `<div class="storage">\ud83d\udce6 <strong>\ubcf4\uad00\ubc95:</strong> ${r.storageInfo}</div>` : ''}
