@@ -255,25 +255,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .tip-card-img svg{width:84px;height:84px}
 .tip-video{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:7px 14px;background:#ff0000;color:#fff;border-radius:18px;font-size:0.83em;font-weight:600;text-decoration:none;transition:all 0.2s}
 .tip-video:hover{background:#cc0000;transform:translateY(-1px);box-shadow:0 3px 10px rgba(255,0,0,0.25)}
-.related-tips{margin-top:18px;background:#fdfaf3;border-radius:12px;padding:14px 16px;border:1px solid #f0e9d8}
-.related-tips summary{cursor:pointer;font-weight:700;font-size:0.98em;color:var(--text);padding:4px 0;list-style:none;display:flex;align-items:center;gap:6px}
-.related-tips summary::-webkit-details-marker{display:none}
-.related-tips summary::after{content:'▼';margin-left:auto;font-size:0.7em;color:var(--text-light);transition:transform 0.2s}
-.related-tips[open] summary::after{transform:rotate(180deg)}
-.related-tips-list{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
-.related-tip{padding:12px 14px;background:#fff;border-radius:10px;border-left:3px solid var(--text-light)}
-.related-tip[data-tipcat="knife"]{border-left-color:#e74c3c}
-.related-tip[data-tipcat="prep"]{border-left-color:#27ae60}
-.related-tip[data-tipcat="technique"]{border-left-color:#e67e22}
-.related-tip[data-tipcat="sauce"]{border-left-color:#9b59b6}
-.related-tip[data-tipcat="storage"]{border-left-color:#3498db}
-.related-tip[data-tipcat="trouble"]{border-left-color:#16a085}
-.related-tip-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
-.related-tip-head strong{font-size:0.96em;color:var(--text)}
-.related-tip-cat{font-size:0.75em;color:var(--text-light);background:#f5f3ef;padding:2px 8px;border-radius:10px}
-.related-tip-body{font-size:0.88em;line-height:1.55;color:var(--text);margin-bottom:8px}
-.related-tip-tip{display:block;background:#fef9e7;border-radius:6px;padding:7px 10px;font-size:0.82em;color:#7d6608;border-left:2px solid #f1c40f;line-height:1.5}
-.related-tip-tip::before{content:'💡 '}
+.modal .steps-list .step-tip{display:block;margin-top:8px}
+.modal .steps-list .step-tip summary{cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;background:#fef9e7;color:#7d6608;border-radius:14px;font-size:0.78em;font-weight:600;border:1px solid rgba(241,196,15,0.45);transition:all 0.2s;list-style:none;user-select:none}
+.modal .steps-list .step-tip summary::-webkit-details-marker{display:none}
+.modal .steps-list .step-tip summary:hover{background:#fceec3;transform:translateY(-1px)}
+.modal .steps-list .step-tip[open] summary{background:#fceec3;border-color:#f1c40f}
+.modal .steps-list .step-tip-list{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.modal .steps-list .step-tip-item{padding:11px 13px;background:#fff;border-radius:9px;border-left:3px solid var(--text-light);box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.modal .steps-list .step-tip-item[data-tipcat="knife"]{border-left-color:#e74c3c}
+.modal .steps-list .step-tip-item[data-tipcat="prep"]{border-left-color:#27ae60}
+.modal .steps-list .step-tip-item[data-tipcat="technique"]{border-left-color:#e67e22}
+.modal .steps-list .step-tip-item[data-tipcat="sauce"]{border-left-color:#9b59b6}
+.modal .steps-list .step-tip-item[data-tipcat="storage"]{border-left-color:#3498db}
+.modal .steps-list .step-tip-item[data-tipcat="trouble"]{border-left-color:#16a085}
+.modal .steps-list .step-tip-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.modal .steps-list .step-tip-head strong{font-size:0.93em;color:var(--text)}
+.modal .steps-list .step-tip-cat{font-size:0.72em;color:var(--text-light);background:#f5f3ef;padding:2px 7px;border-radius:9px}
+.modal .steps-list .step-tip-body{font-size:0.86em;line-height:1.55;color:var(--text);margin-bottom:6px}
+.modal .steps-list .step-tip-bulb{display:block;background:#fef9e7;border-radius:6px;padding:6px 10px;font-size:0.81em;color:#7d6608;border-left:2px solid #f1c40f;line-height:1.45}
+.modal .steps-list .step-tip-bulb::before{content:'💡 '}
 .modal .steps-list{list-style:none;padding-left:0;counter-reset:step-counter}
 .modal .steps-list li{counter-increment:step-counter;padding:10px 0 10px 48px;position:relative;line-height:1.7;border-bottom:1px solid #f5f3ef}
 .modal .steps-list li:last-child{border-bottom:none}
@@ -707,20 +707,11 @@ const subHtml = subs ? `<span class="sub">${subs.join(', ')}</span>` : '';
 return `<li><input type="checkbox" onchange="this.parentElement.classList.toggle('checked')"><div class="ing-row"><span>${display}</span>${subHtml}</div></li>`;
 }).join('')}</ul>
 <h4>\ud83d\udc68\u200d\ud83c\udf73 \uc870\ub9ac\ubc95</h4>
-<ol class="steps-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
-${(() => {
-const related = findRelatedTips(r);
-if(related.length === 0) return '';
-return `<details class="related-tips" open>
-<summary>\ud83d\udca1 \uad00\ub828 \uc694\ub9ac \ud301 (${related.length})</summary>
-<div class="related-tips-list">${related.map(t => `
-<div class="related-tip" data-tipcat="${t.catKey}">
-<div class="related-tip-head"><strong>${t.title}</strong><span class="related-tip-cat">${t.catLabel}</span></div>
-<div class="related-tip-body">${t.body}</div>
-<span class="related-tip-tip">${t.tip}</span>
-</div>`).join('')}</div>
-</details>`;
-})()}
+<ol class="steps-list">${r.steps.map(s => {
+const tips = findTipsForText(s);
+const tipBlock = tips.length ? `<details class="step-tip"><summary>\ud83d\udca1 Tip (${tips.length})</summary><div class="step-tip-list">${tips.map(t => `<div class="step-tip-item" data-tipcat="${t.catKey}"><div class="step-tip-head"><strong>${t.title}</strong><span class="step-tip-cat">${t.catLabel}</span></div><div class="step-tip-body">${t.body}</div><span class="step-tip-bulb">${t.tip}</span></div>`).join('')}</div></details>` : '';
+return `<li>${s}${tipBlock}</li>`;
+}).join('')}</ol>
 ${r.storageInfo ? `<div class="storage">\ud83d\udce6 <strong>\ubcf4\uad00\ubc95:</strong> ${r.storageInfo}</div>` : ''}
 ${r.source ? `<a class="source-link" href="${r.source}" target="_blank" rel="noopener">\ud83d\udd17 ${r.sourceName || '\ucd9c\ucc98 \ubcf4\uae30'}</a>` : ''}
 <div class="tag-list">${(r.tags||[]).map(t => `<span>#${t}</span>`).join('')}</div>`;
@@ -1117,8 +1108,8 @@ const TIP_KEYWORDS = {
 '소스 농도는 전분물':['전분','전분물','걸쭉']
 };
 
-function findRelatedTips(recipe){
-const text = (recipe.steps||[]).join(' ') + ' ' + (recipe.name||'') + ' ' + (recipe.ingredients||[]).join(' ');
+function findTipsForText(text){
+if(!text) return [];
 const matched = new Set();
 const result = [];
 Object.entries(COOKING_TIPS).forEach(([catKey, cat]) => {
