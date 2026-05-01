@@ -10,6 +10,16 @@
 <meta name="author" content="JadeKim042386">
 <link rel="canonical" href="https://jadekim042386.github.io/meal-prep/">
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="밀프랩">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="밀프랩 식단표 자동 생성기 — 98가지 레시피 & 장보기 리스트 무료">
@@ -1532,6 +1542,13 @@ async function submitFeedback(){
 function closeFeedback(){
   document.getElementById('feedbackOverlay').classList.remove('active');
   document.getElementById('feedbackStatus').style.display='none';
+}
+
+// PWA — Service Worker 등록
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+  });
 }
 </script>
 </body>

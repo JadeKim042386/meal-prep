@@ -1,0 +1,12 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="#fef5e3"/>
+  <line x1="172" y1="100" x2="220" y2="270" stroke="#8b5a2b" stroke-width="14" stroke-linecap="round"/>
+  <line x1="218" y1="92" x2="266" y2="270" stroke="#8b5a2b" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 96 268 L 416 268 Q 416 396 256 396 Q 96 396 96 268 Z" fill="#e74c3c"/>
+  <ellipse cx="256" cy="268" rx="160" ry="24" fill="#c0392b"/>
+  <ellipse cx="256" cy="262" rx="148" ry="18" fill="#fdf3d8"/>
+  <circle cx="220" cy="258" r="6" fill="#27ae60"/>
+  <circle cx="280" cy="260" r="6" fill="#f39c12"/>
+  <circle cx="248" cy="256" r="5" fill="#9b59b6"/>
+  <text x="256" y="466" text-anchor="middle" font-size="60" font-weight="800" fill="#2c3e50" font-family="-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif">밀프랩</text>
+</svg>
