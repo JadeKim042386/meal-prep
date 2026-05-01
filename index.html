@@ -234,6 +234,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .cook-tip ul li{padding:3px 0;font-size:0.92em;color:var(--text)}
 .cook-summary{text-align:center;padding:14px;background:#f5f3ef;border-radius:10px;margin-top:14px;font-size:0.93em;color:var(--text)}
 .cook-empty{padding:14px;background:#faf8f4;border-radius:10px;color:var(--text-light);font-size:0.88em;text-align:center;font-style:italic}
+.tip-cats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+.tip-cat{padding:9px 18px;border:none;border-radius:20px;background:transparent;cursor:pointer;font-size:0.9em;font-weight:600;color:var(--text-light);transition:var(--transition)}
+.tip-cat:hover{background:#e8e5e0}
+.tip-cat.active{background:linear-gradient(135deg,#2c3e50,#34495e);color:#fff;box-shadow:0 3px 10px rgba(44,62,80,0.25)}
+.tip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.tip-card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);border-left:4px solid var(--korean);transition:all 0.2s}
+.tip-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+.tip-card[data-tipcat="knife"]{border-left-color:#e74c3c}
+.tip-card[data-tipcat="prep"]{border-left-color:#27ae60}
+.tip-card[data-tipcat="technique"]{border-left-color:#e67e22}
+.tip-card[data-tipcat="sauce"]{border-left-color:#9b59b6}
+.tip-card[data-tipcat="storage"]{border-left-color:#3498db}
+.tip-card[data-tipcat="trouble"]{border-left-color:#16a085}
+.tip-card h4{margin:0 0 8px 0;font-size:1.02em;color:var(--text);font-weight:700}
+.tip-card-body{color:var(--text);font-size:0.92em;line-height:1.6;margin-bottom:10px}
+.tip-card-tip{display:block;background:#fef9e7;border-radius:8px;padding:9px 12px;font-size:0.85em;color:#7d6608;border-left:3px solid #f1c40f;line-height:1.5}
+.tip-card-tip::before{content:'💡 '}
 .modal .steps-list{list-style:none;padding-left:0;counter-reset:step-counter}
 .modal .steps-list li{counter-increment:step-counter;padding:10px 0 10px 48px;position:relative;line-height:1.7;border-bottom:1px solid #f5f3ef}
 .modal .steps-list li:last-child{border-bottom:none}
@@ -363,6 +380,7 @@ body{background:#fff}
 <button class="nav-tab" data-section="weekly">&#x1F4C5; &#xC8FC;&#xAC04; &#xC2DD;&#xB2E8;&#xD45C;</button>
 <button class="nav-tab" data-section="shopping">&#x1F6D2; &#xC7A5;&#xBCF4;&#xAE30; &#xB9AC;&#xC2A4;&#xD2B8;</button>
 <button class="nav-tab" data-section="cooking">&#x1F373; &#xC870;&#xB9AC; &#xC21C;&#xC11C;</button>
+<button class="nav-tab" data-section="tips">&#x1F4DA; &#xC694;&#xB9AC; &#xD301;</button>
 </div>
 </div>
 </nav>
@@ -410,6 +428,11 @@ body{background:#fff}
 
 <div class="section" id="section-cooking">
 <div id="cookingOrderSection"></div>
+</div>
+
+<div class="section" id="section-tips">
+<div class="tip-cats" id="tipCats"></div>
+<div id="tipsSection"></div>
 </div>
 
 </div>
@@ -925,6 +948,122 @@ html += `<div class="shopping-category">
 document.getElementById('shoppingSection').innerHTML = html;
 }
 
+const COOKING_TIPS = {
+knife: {label: '🔪 칼질·썰기', items: [
+{title:'채썰기 (Julienne)', body:'두께 2~3mm, 길이 5~6cm로 가늘게. 재료를 먼저 편으로 썬 뒤 겹쳐 썰면 균일하다.', tip:'당근·무·양파에 적합, 너무 두꺼우면 무침이 질겨진다.'},
+{title:'깍둑썰기 (큐브)', body:'1~2cm 정육면체로. 카레·찌개용 무, 감자, 두부에 사용한다.', tip:'크기를 일정하게 해야 익는 속도가 같다.'},
+{title:'어슷썰기 (대각선)', body:'칼을 45도 기울여 0.5cm 두께로. 단면이 넓어 양념이 잘 밴다.', tip:'대파·고추·오이는 어슷썰기로 식감이 살아난다.'},
+{title:'다지기 (마늘·양파·고추)', body:'잘게 썬 뒤 칼을 위아래로 흔들어 곱게 다진다. 양념·소·볶음에 필수.', tip:'양파는 뿌리를 남겨 썰면 흩어지지 않는다.'},
+{title:'편썰기 (마늘·생강)', body:'1~2mm 얇은 판 모양으로. 기름에 향을 낼 때 가장 적합하다.', tip:'마늘 편은 약불에서 천천히 볶아야 안 탄다.'},
+{title:'송송썰기 (대파·쪽파)', body:'둥근 재료를 0.2~0.3cm 간격으로 얇게. 국·찌개 고명에 쓴다.', tip:'찬물에 헹구면 매운맛이 빠지고 아삭해진다.'},
+{title:'반달썰기 (애호박·오이)', body:'세로로 반 가른 뒤 0.5cm 두께로. 된장찌개·나물에 자주 쓴다.', tip:'두께가 두꺼우면 볶음 시 물이 많이 나온다.'},
+{title:'은행잎썰기 (무·당근)', body:'반달 상태에서 한 번 더 갈라 4등분. 국물 요리에 빨리 익히고 싶을 때.', tip:'뭇국·갈비탕용 무를 이렇게 썰면 식감이 좋다.'},
+{title:'결 따라/반대로 썰기 (육류)', body:'구이는 결 따라, 국·볶음은 결 반대로. 결 반대로 썰면 부드럽다.', tip:'불고기·장조림은 반드시 결 반대 방향으로.'},
+{title:'칼 잡는 법 (Pinch Grip)', body:'엄지와 검지로 칼날 뿌리를 집고 나머지 손가락은 손잡이를 감싼다.', tip:'손잡이만 잡으면 흔들려 일정한 두께가 안 나온다.'},
+{title:'손가락 보호 (Cat Claw)', body:'재료 잡는 손은 손가락을 구부려 손톱이 칼 옆면에 닿게.', tip:'손끝이 아닌 첫 마디로 가이드해야 베이지 않는다.'},
+{title:'칼 관리·도마 세팅', body:'사용 후 바로 닦아 말리고 주 1회 날을 세운다. 도마 밑엔 젖은 행주를.', tip:'무딘 칼이 더 위험하다, 힘이 어긋나 미끄러진다.'}
+]},
+prep: {label: '🧂 재료 손질', items: [
+{title:'고기 핏물 빼기', body:'찬물에 30분~1시간 담가 중간에 물을 2~3회 갈아준다. 갈비는 1시간 이상.', tip:'뜨거운 물은 단백질을 굳혀 핏물이 안 빠진다.'},
+{title:'누린내·잡내 제거', body:'고기는 청주·맛술 10분, 돼지고기는 생강·후추 추가, 간·내장은 우유 20분.', tip:'생강은 익히기 직전에 넣어야 향이 살아난다.'},
+{title:'채소 씻기', body:'잎채소는 흐르는 물에 한 장씩, 시금치는 뿌리에 칼집, 뿌리채소는 솔로 문질러.', tip:'식초물 1분 담그기는 농약·벌레 제거에 효과적.'},
+{title:'데치기 시간', body:'끓는 물 + 소금 1작은술. 브로콜리 1분, 시금치 30초, 콩나물·숙주 2~3분 후 즉시 얼음물.', tip:'콩나물은 뚜껑을 처음부터 닫거나 끝까지 열어둘 것.'},
+{title:'콩 불리기', body:'병아리콩·검은콩은 8~12시간, 렌틸콩은 불리지 않아도 OK. 부피 3배 물에 냉장.', tip:'여름엔 반드시 냉장 불림, 상온은 쉽게 쉰다.'},
+{title:'쌀 불리기', body:'백미는 30분, 현미·잡곡은 2시간 이상. 찬물에 불리고 밥물은 새 물로.', tip:'오래 씻으면 영양소 손실, 가볍게 3~4번이면 충분.'},
+{title:'두부 물기 빼기', body:'키친타월로 감싸 무거운 접시로 15~20분 누르거나 전자레인지 2분.', tip:'소금 살짝 뿌리면 물이 더 잘 빠진다.'},
+{title:'새우 손질', body:'꼬리 한 마디 남기고 껍질 제거, 등 두 번째 마디에 이쑤시개로 검은 내장을.', tip:'전분·소금으로 비비면 잡내와 점액이 깨끗이 빠진다.'},
+{title:'생선 비린내 제거', body:'쌀뜨물·우유·청주 10~15분 담그거나 소금 30분 후 물기 닦기. 레몬즙도 효과적.', tip:'비늘·내장·검은막 제거가 비린내의 90%.'},
+{title:'버섯 손질', body:'키친타월·솔로 가볍게 털거나 흐르는 물에 빠르게. 표고는 기둥을 따로 사용.', tip:'물에 담그면 향이 빠지고 식감이 물러진다.'},
+{title:'김치 신맛 줄이기', body:'찬물에 5~10분 헹구거나 설탕 한 꼬집 넣고 볶기. 들기름·참기름이 도움.', tip:'신김치는 찌개·볶음용으로 활용하면 더 맛있다.'},
+{title:'냉동 고기 해동', body:'냉장실 12~24시간 저온 해동이 가장 안전. 급할 땐 비닐째 찬물 30분~1시간.', tip:'상온·뜨거운 물 해동은 식중독 위험이 크다.'},
+{title:'양파 매운맛 빼기', body:'썬 후 찬물에 5~10분 담그거나 식초물에 헹군다. 결대로 썰면 더 부드러워.', tip:'물에 너무 오래 담그면 단맛까지 빠진다.'}
+]},
+technique: {label: '🔥 조리 기법', items: [
+{title:'팬 충분히 예열', body:'중강불 1~2분 달군 뒤 기름. 물 한 방울이 구슬처럼 굴러가면 적정 온도.', tip:'차가운 팬에 재료부터 넣으면 들러붙고 수분이 빠진다.'},
+{title:'센·중·약불 구분', body:'센불=볶음·시어링, 중불=일반 조리·소스, 약불=뜸 들이기·은근한 끓임.', tip:'겁나서 약불만 쓰면 물이 생겨 찜이 된다.'},
+{title:'시어링 (마이야르)', body:'표면 물기 제거, 한 면이 갈색이 될 때까지 뒤집지 않고 기다린다.', tip:'자꾸 뒤집으면 색도 안 나고 육즙도 빠진다.'},
+{title:'볶음 투입 순서', body:'마늘·양파 → 당근·감자 → 버섯·피망 → 잎채소. 시차 두면 식감이 살아난다.', tip:'잎채소를 먼저 넣으면 흐물흐물 죽이 된다.'},
+{title:'데쳐서 색 살리기', body:'끓는 소금물 30초~1분 데친 뒤 찬물에 헹구면 색·아삭함 유지, 변색 방지.', tip:'찬물에 식히지 않으면 잔열로 더 익는다.'},
+{title:'팬에 너무 많이 넣지 않기', body:'팬 면적의 70% 이하만 채워야 볶아진다. 양 많으면 온도 떨어져 찜이 된다.', tip:'한꺼번에 다 넣지 말고 두 번에 나눠 볶을 것.'},
+{title:'양념 투입은 끝물에', body:'간장·설탕·고추장 등 당분·아미노산 양념은 마지막에. 30초~1분만 더 볶기.', tip:'처음부터 간장 부으면 새까맣게 타서 쓴맛 난다.'},
+{title:'오븐 예열 필수', body:'표시 온도 도달까지 최소 10~15분 예열. 예열 없이 굽기 시작하면 식감 망친다.', tip:'예열 안 하면 시간만 늘고 결과물 별로.'},
+{title:'시트팬 겹치지 않게', body:'재료 사이에 손가락 한 마디 간격. 겹치면 수분 갇혀 찜이 된다.', tip:'종이호일 위에 놓으면 설거지가 줄어든다.'},
+{title:'원팬·원팟 액체 비율', body:'재료가 1/3~1/2 잠기는 양. 너무 많으면 묽어지고, 적으면 타거나 안 익는다.', tip:'처음엔 적게, 부족하면 추가하는 편이 안전하다.'},
+{title:'면 알덴테 굽기', body:'포장 시간보다 1~2분 짧게. 소스 팬에서 마저 익히면 전분물이 면에 배어든다.', tip:'밀프랩용은 더 짧게, 데울 때를 감안.'},
+{title:'쌀밥 비율과 뜸', body:'백미 1 : 물 1.1~1.2, 30분 불림 → 강불 끓이고 약불 12분 → 끄고 10분 뜸.', tip:'다 됐다고 바로 뚜껑 열면 진밥·된밥 갈린다.'},
+{title:'고기 휴지(rest)', body:'스테이크·닭가슴살은 익힌 뒤 5~10분 도마에서 휴지. 육즙이 재흡수된다.', tip:'바로 자르면 도마가 육즙 바다가 된다.'},
+{title:'소스 농도는 전분물', body:'전분 1 : 물 2 비율. 끓는 소스에 조금씩 흘려넣고 저으며, 1분 더 끓여 풋내 날리기.', tip:'차가운 물에 풀어야 덩어리지지 않는다.'}
+]},
+sauce: {label: '🥣 양념·소스', items: [
+{title:'한식 만능 양념장', body:'간장 3 : 설탕 1 : 다진마늘 1 : 참기름 1 : 다진파 2. 무침·조림·볶음 만능.', tip:'설탕 대신 매실청 1을 쓰면 감칠맛이 살아남.'},
+{title:'불고기 양념', body:'간장 4 : 설탕 2 : 배즙 3 : 다진마늘 1 : 참기름 1 + 후추. 30분~2시간 재우기.', tip:'키위·파인애플 과량 시 고기가 뭉개진다.'},
+{title:'제육볶음 양념', body:'고추장 3 : 고춧가루 1 : 간장 1 : 설탕 1 : 다진마늘 1 : 생강 0.5 : 청주 1.', tip:'양파를 함께 재우면 단맛과 육질이 살아남.'},
+{title:'데리야끼 소스', body:'간장 2 : 미림 2 : 설탕 1 : 청주 1. 약불에서 1/3까지 졸이면 윤기 나는 소스.', tip:'전분물 추가는 NO, 졸여서 점도 내기.'},
+{title:'토마토 소스 베이스', body:'홀토마토 4 : 양파 1 : 마늘 0.5 : 올리브유 1 + 소금·설탕. 20분 졸임.', tip:'설탕 한 꼬집이 산미를 부드럽게 만든다.'},
+{title:'고추장 비빔 양념', body:'고추장 2 : 설탕 1 : 식초 1 : 참기름 1 : 다진마늘 0.5 : 통깨 0.5.', tip:'사이다 0.5 추가 시 청량한 단맛이 살아남.'},
+{title:'미소·된장 양념', body:'된장 2 : 미림 1 : 설탕 0.5 : 다진마늘 0.5 : 참기름 0.5. 가지·연어 구이에.', tip:'오래 끓이면 향이 날아감, 마지막에 투입.'},
+{title:'굴소스 볶음 베이스', body:'굴소스 2 : 간장 1 : 설탕 0.5 : 청주 1 : 다진마늘 1 + 후추. 중식풍 만능.', tip:'굴소스 자체가 짜므로 소금 추가 금지.'},
+{title:'스리라차 마요', body:'마요 3 : 스리라차 1 : 라임즙 0.5 : 꿀 0.5. 포케·새우튀김·샌드위치에.', tip:'꿀 대신 연유 쓰면 더 진한 풍미.'},
+{title:'바질 페스토', body:'바질 50g : 잣 30g : 마늘 1쪽 : 파마산 30g : 올리브유 100ml.', tip:'잣은 살짝 볶아야 고소함이 두 배.'},
+{title:'토마토 살사', body:'토마토 4 : 양파 1 : 고수 0.5 : 라임즙 1 : 할라피뇨 0.5. 10분 절여 수분 빼기.', tip:'토마토 씨 제거해야 물기 없이 깔끔.'},
+{title:'발사믹 드레싱', body:'올리브유 3 : 발사믹식초 1 : 디종머스타드 0.5 : 꿀 0.5 + 소금·후추.', tip:'머스타드 먼저 섞고 오일 천천히 넣어 유화.'},
+{title:'그릭요거트 드레싱', body:'그릭요거트 3 : 레몬즙 1 : 올리브유 1 : 다진마늘 0.5 + 딜·소금.', tip:'오이 다져 넣으면 차지키 소스로 변신.'},
+{title:'데미글라스 베이스', body:'버터 1 : 밀가루 1로 브라운 루 + 비프스톡 8 : 토마토페이스트 1 : 레드와인 2.', tip:'루가 밝으면 풍미 부족, 충분히 갈색까지.'}
+]},
+storage: {label: '📦 보관·데우기', items: [
+{title:'냉장 vs 냉동', body:'조리 음식은 냉장 3~4일 이내, 그 이상은 냉동(2~4주). 4일+나머지 냉동으로 분배.', tip:'월·화·수·목 분량만 냉장, 금요일분은 냉동.'},
+{title:'밥 한 김 식혀 소분', body:'갓 지은 밥을 평평하게 펴 한 김 식힌 뒤 1공기씩 랩이나 용기에. 냉동 2~3주.', tip:'뜨거울 때 밀봉하면 물맺힘으로 떡진다.'},
+{title:'국·찌개는 한 번 더 끓여서', body:'조리 후 한 번 더 팔팔 끓여 식힌 뒤 냉장. 먹기 전에도 펄펄 끓여 데우기. 2~3일.', tip:'건더기·국물 따로 담으면 식감이 더 살아남.'},
+{title:'볶음은 3~4일', body:'완전히 식힌 뒤 밀폐. 채소 볶음은 더 빨리 물이 생기니 2~3일 권장.', tip:'양념 진하게 하면 보존성·풍미 모두 상승.'},
+{title:'샐러드는 드레싱 따로', body:'잎채소는 물기 완전히 제거 + 키친타월. 드레싱은 작은 용기에 따로.', tip:'토마토·오이는 별도 칸에 담아야 안 무름.'},
+{title:'곡물 미리 익혀 소분', body:'한 번에 많이 삶아 1회분씩 소분. 냉장 4~5일, 냉동 1개월. 데울 때 물 1큰술.', tip:'기름 1방울 섞어 삶으면 알알이 안 뭉친다.'},
+{title:'오버나이트 오츠 5일', body:'오트밀+우유+요거트는 냉장 5일까지. 과일은 2~3일치만 미리, 나머진 당일.', tip:'꿀·시럽은 먹기 직전, 미리 넣으면 묽어진다.'},
+{title:'견과류 먹기 직전 토핑', body:'미리 섞으면 눅눅하고 산패. 작은 지퍼백에 1회분씩 따로.', tip:'견과는 냉동 보관해야 산패 늦춰진다.'},
+{title:'유리 vs 플라스틱 용기', body:'전자레인지·식기세척기·냄새 걱정 없는 유리가 1순위. 휴대용은 BPA-free 플라스틱.', tip:'기름·김치는 무조건 유리, 플라스틱 변색 주의.'},
+{title:'라벨링', body:'마스킹테이프에 메뉴+조리일을 적어 붙이면 묵힌 음식 사고 방지. 선입선출.', tip:'냉동은 조리일+해동기한까지 표기.'},
+{title:'재가열 — 음식별 최적', body:'국·찌개=냄비, 볶음·구이=팬·에어프라이어, 밥·찜=전자레인지가 베스트.', tip:'전자레인지 사용 시 물 1큰술 + 뚜껑 살짝.'},
+{title:'데우기 전 상온 5분', body:'냉장에서 바로 데우면 겉만 뜨겁고 속은 차갑다. 5분 후 가열하면 균일.', tip:'더운 날엔 3분 이내로만 짧게.'},
+{title:'에어프라이어 바삭함', body:'튀김·구이·전류는 180도 3~5분이면 갓 만든 듯 바삭. 키친타월로 기름기 닦기.', tip:'물기 많은 음식은 호일 깔아야 안 들러붙는다.'},
+{title:'식중독 예방', body:'조리 후 90분(여름 60분) 안에 식혀 냉장. 냉동식품은 전날 밤 냉장칸으로.', tip:'장마·한여름엔 실온 30분만 둬도 위험.'}
+]},
+trouble: {label: '🛟 문제 해결', items: [
+{title:'국물이 너무 짤 때', body:'감자·무를 큼직하게 썰어 넣고 끓이면 염분을 흡수해 짠맛이 줄어든다.', tip:'간은 마지막에, 한 번에 다 넣지 말고 조금씩.'},
+{title:'음식이 너무 매울 때', body:'캡사이신은 물에 안 녹는다. 설탕·우유·플레인 요거트·두부로 중화.', tip:'고춧가루는 절반만 넣고 맛본 뒤 추가.'},
+{title:'고기·생선 비린내', body:'생강·청주·우유에 10분 담그거나 끓일 때 대파 뿌리를 함께 넣는다.', tip:'조리 직전 키친타월로 핏물을 꼼꼼히 닦기.'},
+{title:'냄비 바닥이 살짝 탔을 때', body:'탄 부분 절대 긁지 말고 내용물만 다른 냄비로. 식빵 한 조각으로 탄내 흡수.', tip:'약불로 줄이고 바닥을 자주 저어주면 예방.'},
+{title:'면이 떡지거나 불었을 때', body:'뜨거운 물에 30초 헹구거나 참기름 한 방울로 다시 풀어준다.', tip:'삶은 즉시 찬물에 헹궈 전분기 제거.'},
+{title:'찌개·카레가 너무 묽을 때', body:'뚜껑 열고 졸이거나 감자 으깬 것·전분물·밀가루 1스푼으로 농도 맞춤.', tip:'물은 처음부터 적게, 부족하면 추가.'},
+{title:'양념장이 너무 묽을 때', body:'고춧가루·다진 마늘·물엿을 추가하면 농도와 감칠맛이 함께 살아난다.', tip:'간장과 물 비율을 미리 정해두고 시작.'},
+{title:'마늘을 너무 많이 넣었을 때', body:'우유·설탕을 약간 넣고 충분히 끓여 매운 향을 날린다.', tip:'마늘은 1인분 기준 반 큰술부터 시작.'},
+{title:'고기가 질길 때', body:'키위·배·파인애플즙에 20분 재우거나 결 반대 방향으로 얇게 썬다.', tip:'센 불에 겉만 익히고 잔열로 마무리.'},
+{title:'밥이 너무 질거나 될 때', body:'질면 뚜껑 열고 약불로 수분 날리기. 되면 뜨거운 물 두 스푼 + 5분 뜸.', tip:'쌀과 물은 1:1.1 비율을 기본으로 기억.'},
+{title:'채소가 시들었을 때', body:'얼음물에 10분 담가두면 세포가 다시 물을 흡수해 아삭함이 돌아온다.', tip:'젖은 키친타월에 싸서 냉장 보관.'},
+{title:'반찬이 변색됐을 때', body:'데칠 때 소금 약간 + 찬물에 빠르게 헹궈 식히면 푸른빛이 유지된다.', tip:'참기름은 먹기 직전에 무치기.'},
+{title:'보관 후 찌개 맛 밍밍', body:'다진 마늘·대파·들기름을 새로 추가하면 첫날의 풍미가 되살아난다.', tip:'한 번 먹을 양만 덜어 끓이면 맛 보존.'},
+{title:'양념이 골고루 안 됐을 때', body:'재료 물기를 제거 후 양념과 버무리고 10분 두면 속까지 스며든다.', tip:'무침은 손으로 조물조물해야 흡수가 빠름.'}
+]}
+};
+let currentTipCat = 'knife';
+function renderCookingTips(){
+const cats = Object.keys(COOKING_TIPS);
+const navHtml = cats.map(k => `<button class="tip-cat${k===currentTipCat?' active':''}" data-tipcat="${k}">${COOKING_TIPS[k].label}</button>`).join('');
+document.getElementById('tipCats').innerHTML = navHtml;
+const items = COOKING_TIPS[currentTipCat].items;
+const html = `<div class="tip-grid">${items.map(it => `
+<div class="tip-card" data-tipcat="${currentTipCat}">
+<h4>${it.title}</h4>
+<div class="tip-card-body">${it.body}</div>
+<span class="tip-card-tip">${it.tip}</span>
+</div>`).join('')}</div>`;
+document.getElementById('tipsSection').innerHTML = html;
+document.querySelectorAll('.tip-cat').forEach(btn => {
+btn.addEventListener('click', () => {
+currentTipCat = btn.dataset.tipcat;
+renderCookingTips();
+});
+});
+}
+
 function classifyCookingPhase(recipe){
 const name = recipe.name || '';
 const cookTime = recipe.cookTime || 0;
@@ -1110,6 +1249,7 @@ observeCards();
 renderWeekly();
 renderShopping();
 renderCookingOrder();
+renderCookingTips();
 loadShoppingState();
 // Open all shopping categories by default
 document.querySelectorAll('.shopping-header').forEach(h => { h.classList.add('open'); h.nextElementSibling.classList.add('open'); });
