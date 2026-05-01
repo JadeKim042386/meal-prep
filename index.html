@@ -210,6 +210,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .modal .ingredient-list .ing-row{display:flex;flex-direction:column;gap:2px;flex:1}
 .modal .ingredient-list .sub{font-size:0.78em;color:#9a8d72;margin-left:2px}
 .modal .ingredient-list .sub::before{content:'↪ 대체: ';color:#b6a98c}
+.cook-phase{background:#fff;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.04);border-left:4px solid var(--text-light)}
+.cook-phase[data-phase="1"]{border-left-color:#e74c3c}
+.cook-phase[data-phase="2"]{border-left-color:#f39c12}
+.cook-phase[data-phase="3"]{border-left-color:#2ecc71}
+.cook-phase[data-phase="4"]{border-left-color:#3498db}
+.cook-phase-header h3{margin:0 0 4px 0;color:var(--text);font-size:1.1em}
+.cook-phase-header p{margin:0 0 14px 0;color:var(--text-light);font-size:0.88em;line-height:1.5}
+.cook-phase-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.cook-item{padding:12px 14px;border-radius:10px;background:#faf8f4;cursor:pointer;border-left:3px solid var(--text-light);transition:all 0.2s}
+.cook-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.cook-item[data-cat="korean"]{border-left-color:var(--korean)}
+.cook-item[data-cat="western"]{border-left-color:var(--western)}
+.cook-item[data-cat="asian"]{border-left-color:var(--asian)}
+.cook-item[data-cat="mexican"]{border-left-color:var(--mexican)}
+.cook-item[data-cat="mediterranean"]{border-left-color:var(--mediterranean)}
+.cook-item[data-cat="quickmeal"]{border-left-color:var(--quickmeal)}
+.cook-item-name{font-weight:600;font-size:0.95em;margin-bottom:4px;color:var(--text)}
+.cook-item-meta{color:var(--text-light);font-size:0.8em;line-height:1.4}
+.cook-tip{background:linear-gradient(135deg,#fef9e7,#fdf6e3);padding:18px 20px;border-radius:12px;margin-bottom:16px;border:1px solid rgba(241,196,15,0.25)}
+.cook-tip strong{display:block;margin-bottom:6px;font-size:1.02em}
+.cook-tip ul{margin:6px 0 0 0;padding-left:22px}
+.cook-tip ul li{padding:3px 0;font-size:0.92em;color:var(--text)}
+.cook-summary{text-align:center;padding:14px;background:#f5f3ef;border-radius:10px;margin-top:14px;font-size:0.93em;color:var(--text)}
 .modal .steps-list{list-style:none;padding-left:0;counter-reset:step-counter}
 .modal .steps-list li{counter-increment:step-counter;padding:10px 0 10px 48px;position:relative;line-height:1.7;border-bottom:1px solid #f5f3ef}
 .modal .steps-list li:last-child{border-bottom:none}
@@ -338,6 +361,7 @@ body{background:#fff}
 <button class="nav-tab active" data-section="recipes">&#x1F4D6; &#xB808;&#xC2DC;&#xD53C; &#xBAA8;&#xC74C;</button>
 <button class="nav-tab" data-section="weekly">&#x1F4C5; &#xC8FC;&#xAC04; &#xC2DD;&#xB2E8;&#xD45C;</button>
 <button class="nav-tab" data-section="shopping">&#x1F6D2; &#xC7A5;&#xBCF4;&#xAE30; &#xB9AC;&#xC2A4;&#xD2B8;</button>
+<button class="nav-tab" data-section="cooking">&#x1F373; &#xC870;&#xB9AC; &#xC21C;&#xC11C;</button>
 </div>
 </div>
 </nav>
@@ -381,6 +405,10 @@ body{background:#fff}
 <div class="section" id="section-shopping">
 <div class="shopping-section" id="shoppingSection"></div>
 <button class="reset-btn" id="resetBtn">&#x267B;&#xFE0F; &#xC804;&#xCCB4; &#xCCB4;&#xD06C; &#xD574;&#xC81C;</button>
+</div>
+
+<div class="section" id="section-cooking">
+<div id="cookingOrderSection"></div>
 </div>
 
 </div>
@@ -895,6 +923,70 @@ html += `<div class="shopping-category">
 document.getElementById('shoppingSection').innerHTML = html;
 }
 
+function classifyCookingPhase(recipe){
+const name = recipe.name || '';
+const cookTime = recipe.cookTime || 0;
+const type = recipe.type;
+const ingText = (recipe.ingredients || []).join(' ');
+if(/회 |포케|샐러드/.test(name) || /연어회|참치회|광어회/.test(ingText)) return 4;
+if(cookTime >= 60 || /찜|스튜|개장|곰탕|전골|육수/.test(name)) return 1;
+if(type === 'sheet-pan' || cookTime >= 30) return 2;
+return 3;
+}
+
+function renderCookingOrder(){
+const activePlan = getActiveWeeklyPlan();
+const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const used = new Map();
+days.forEach(day => {
+const plan = activePlan[day];
+if(!plan) return;
+['lunch','dinner'].forEach(meal => {
+const name = plan[meal];
+if(!name) return;
+const slot = `${DAY_NAMES[day]} ${meal==='lunch'?'점':'저'}`;
+if(used.has(name)){
+used.get(name).slots.push(slot);
+} else {
+const r = DATA.recipes.find(x => x.name === name);
+if(r) used.set(name, {recipe: r, slots: [slot]});
+}
+});
+});
+const recipes = [...used.values()].map(({recipe, slots}) => ({...recipe, _phase: classifyCookingPhase(recipe), _slots: slots}));
+const phases = [
+{n:1, title:'🔥 1단계 — 장시간 조리 (제일 먼저)', desc:'끓이는 동안 다른 요리를 동시에 진행할 수 있어 시간 효율이 가장 큽니다.'},
+{n:2, title:'🥘 2단계 — 오븐·시트팬 (예열 후)', desc:'오븐 예열 + 굽는 30~40분 동안 채소 손질과 양념장 준비를 끝낼 수 있습니다.'},
+{n:3, title:'🍳 3단계 — 빠른 볶음·구이 (마지막에)', desc:'센불에서 빠르게 조리하므로 다른 작업이 끝난 뒤 한 번에 처리합니다.'},
+{n:4, title:'🥗 4단계 — 주중 추가 조리 (신선도 중요)', desc:'회·생채소 위주는 만든 당일에 먹어야 하므로 먹기 전날 또는 당일에 따로 조리합니다.'},
+];
+let html = `<div class="cook-tip"><strong>💡 D-1 (조리 전날) 밑준비 체크리스트</strong><ul>
+<li>양념장 미리 만들어 냉장 보관 (간장·식초·미소 베이스)</li>
+<li>고기 핏물 빼기 — 찬물에 30분~1시간</li>
+<li>단단한 채소(당근·감자·양파) 미리 손질해 밀폐용기 보관</li>
+<li>곡물(쌀·퀴노아) 씻어서 30분 이상 불리기</li>
+<li>밀프랩 용기와 라벨, 보관용 스티커 준비</li>
+</ul></div>`;
+phases.forEach(phase => {
+const items = recipes.filter(r => r._phase === phase.n);
+if(items.length === 0) return;
+items.sort((a,b) => (b.cookTime||0) - (a.cookTime||0));
+html += `<div class="cook-phase" data-phase="${phase.n}">
+<div class="cook-phase-header"><h3>${phase.title}</h3><p>${phase.desc}</p></div>
+<div class="cook-phase-items">${items.map(r => `
+<div class="cook-item" data-cat="${r.displayCategory||''}" onclick="openModal('${r.name.replace(/'/g,"\\'")}')">
+<div class="cook-item-name">${r.name}</div>
+<div class="cook-item-meta">⏱ ${r.cookTime}분 · ${r.servings||4}인분 · ${r._slots.join(', ')}</div>
+</div>`).join('')}</div>
+</div>`;
+});
+const totalMin = recipes.reduce((s, r) => s + (r.cookTime || 0), 0);
+const totalH = Math.floor(totalMin / 60);
+const remM = totalMin % 60;
+html += `<div class="cook-summary">📊 단순 합산 조리 시간: <strong>약 ${totalH>0?totalH+'시간 ':''}${remM}분</strong> · 1·2단계를 병렬로 진행하면 실제 소요 시간은 절반 가량으로 단축됩니다.</div>`;
+document.getElementById('cookingOrderSection').innerHTML = html;
+}
+
 function toggleShop(el){
 el.classList.toggle('open');
 el.nextElementSibling.classList.toggle('open');
@@ -977,6 +1069,7 @@ saveWeeklyPlan(plan, mode);
 localStorage.removeItem('mealprep-shopping');
 renderWeekly();
 renderShopping();
+renderCookingOrder();
 // Open all shopping categories
 document.querySelectorAll('.shopping-header').forEach(h => { h.classList.add('open'); h.nextElementSibling.classList.add('open'); });
 });
@@ -1014,6 +1107,7 @@ renderRecipes();
 observeCards();
 renderWeekly();
 renderShopping();
+renderCookingOrder();
 loadShoppingState();
 // Open all shopping categories by default
 document.querySelectorAll('.shopping-header').forEach(h => { h.classList.add('open'); h.nextElementSibling.classList.add('open'); });
