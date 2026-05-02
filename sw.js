@@ -1,4 +1,4 @@
-// Service Worker for 밀프랩 가이드 PWA
+// Service Worker for 밀프랩 플래너(Meal-Prep Planner) PWA
 const CACHE_VERSION = 'mealprep-v1';
 const ASSETS = [
   './',

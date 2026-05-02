@@ -31,7 +31,7 @@
 | 필드 | 값 |
 |---|---|
 | Package ID | `io.github.jadekim042386.mealprep` |
-| App name | `밀프랩 가이드` |
+| App name | `밀프랩 플래너(Meal-Prep Planner)` |
 | Launcher name | `밀프랩` |
 | App version | `1.0.0` |
 | App version code | `1` |
