@@ -7,9 +7,9 @@ Play Console 등록 시 그대로 복사해 붙여 넣으면 됩니다.
 ## 앱 이름 (App name) — 30자 제한
 
 ```
-밀프랩 플래너 - Meal Prep Planner
+밀프랩 플래너(Meal-Prep Planner)
 ```
-(28자, 한/영 검색 양면 노출)
+(26자, 한/영 검색 양면 노출)
 
 ---
 
@@ -115,9 +115,9 @@ Auto weekly meal plan, shopping list & cooking guide with 98 Korean recipes.
 ### English
 
 ```
-🥘 Meal Prep Planner — One tap and your weekly meal plan, shopping list, and cooking guide are ready.
+🥘 Meal-Prep Planner — One tap and your weekly meal plan, shopping list, and cooking guide are ready.
 
-Stop spending 30-60 minutes every week wondering "what should I cook?" and "what do I need to buy?". Meal Prep Planner generates a balanced 7-day meal plan from 98 curated recipes (Korean, Western, Asian, Mediterranean, Mexican) and organizes a categorized shopping list automatically.
+Stop spending 30-60 minutes every week wondering "what should I cook?" and "what do I need to buy?". Meal-Prep Planner generates a balanced 7-day meal plan from 98 curated recipes (Korean, Western, Asian, Mediterranean, Mexican) and organizes a categorized shopping list automatically.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 ✨ KEY FEATURES
