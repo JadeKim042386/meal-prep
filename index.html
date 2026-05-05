@@ -181,6 +181,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 
 /* Shopping List */
 .shopping-section{padding:20px 0}
+.shop-info{padding:12px 16px;background:linear-gradient(135deg,#fef9e7,#fdf6e3);border-radius:10px;margin-bottom:16px;font-size:0.9em;color:var(--text);border:1px solid rgba(241,196,15,0.25)}
+.shop-info strong{color:var(--accent)}
 .shopping-category{background:var(--card);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
 .shopping-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:700;font-size:1.05em;transition:all 0.3s ease;user-select:none;border-left:4px solid transparent}
 .shopping-header:hover{background:#f8f6f2}
@@ -941,6 +943,28 @@ if(freeformCount > 0) parts.push('적당량');
 return parts.length ? parts.join(' + ') : '적당량';
 }
 
+// 재료 분량 스케일: 원본 amount × scale(필요 인분/레시피 인분)
+// 예) 레시피 4인분, 식단표 1회 등장 → scale=0.25 → "양파 1개" → "0.25개"
+function scaleAmount(amtStr, scale){
+if(!amtStr || amtStr === '적당량' || Math.abs(scale - 1) < 0.001) return amtStr;
+const m = amtStr.match(/^(\d+(?:\.\d+)?(?:\/\d+)?)(.*)$/);
+if(!m) return amtStr;
+const numStr = m[1];
+const rest = m[2];
+let num;
+if(numStr.includes('/')){
+const [a,b] = numStr.split('/').map(Number);
+num = a/b;
+} else {
+num = parseFloat(numStr);
+}
+if(isNaN(num)) return amtStr;
+const scaled = num * scale;
+if(scaled < 0.05) return '약간';
+const display = Number.isInteger(scaled) ? scaled : Math.round(scaled*100)/100;
+return display + rest;
+}
+
 function generateShoppingList(){
 const activePlan = getActiveWeeklyPlan();
 const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
@@ -948,14 +972,23 @@ const meals = ['lunch','dinner'];
 const categorized = {meat:[],vegetable:[],dairy:[],grain:[],sauce:[],etc:[]};
 const seen = {meat:{},vegetable:{},dairy:{},grain:{},sauce:{},etc:{}};
 
+// 1) 식단표에서 각 레시피의 등장 횟수 집계 (= 필요한 인분 수)
+const occurrences = {};
 days.forEach(day => {
 const plan = activePlan[day];
 if(!plan) return;
 meals.forEach(meal => {
-const recipeName = plan[meal];
-if(!recipeName) return;
+const name = plan[meal];
+if(name) occurrences[name] = (occurrences[name] || 0) + 1;
+});
+});
+
+// 2) 레시피별로 한 번만 처리하면서 amount를 스케일
+Object.entries(occurrences).forEach(([recipeName, count]) => {
 const recipe = DATA.recipes.find(r => r.name === recipeName);
 if(!recipe) return;
+const servings = recipe.servings || 1;
+const scale = count / servings;
 recipe.ingredients.forEach(ing => {
 const cat = classifyIngredient(ing);
 const match = ing.match(/^(.+?)\s+(\d[\d\/\.]*\s*.+)$/);
@@ -963,17 +996,15 @@ let itemName = ing;
 let amount = '';
 if(match){
 itemName = match[1].trim();
-amount = match[2].trim();
+amount = scaleAmount(match[2].trim(), scale);
 }
 const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
-// 별칭 우선, 없으면 괄호 부연 제거한 stripped를 폴백으로 → 동일 재료의 표기 변종을 한 항목으로 통합
 const canonical = SHOP_ALIASES[itemName] || SHOP_ALIASES[stripped] || stripped || itemName;
 if(seen[cat][canonical]){
 seen[cat][canonical].amounts.push(amount || '적당량');
 } else {
 seen[cat][canonical] = {item: canonical, amounts: [amount || '적당량']};
 }
-});
 });
 });
 
@@ -990,7 +1021,16 @@ return result;
 function renderShopping(){
 const cats = ['meat','vegetable','dairy','grain','sauce','etc'];
 const shoppingData = generateShoppingList();
-let html = '';
+// 식단표 끼니 수 계산 (안내 문구용)
+const activePlan = getActiveWeeklyPlan();
+const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+let mealCount = 0;
+days.forEach(day => {
+const plan = activePlan[day];
+if(!plan) return;
+['lunch','dinner'].forEach(meal => { if(plan[meal]) mealCount++; });
+});
+let html = `<div class="shop-info">📋 이번 주 <strong>${mealCount}끼</strong> 분량 (각 레시피의 인분 수에 맞춰 자동 환산)</div>`;
 cats.forEach(cat => {
 const items = shoppingData[cat] || [];
 if(items.length === 0) return;
