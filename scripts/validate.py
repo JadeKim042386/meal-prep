@@ -108,15 +108,20 @@ if data:
 
         names.append(rn)
 
-    # Unique names
-    seen = {}
-    dups = []
-    for n in names:
-        if n in seen:
-            dups.append(n)
-        seen[n] = True
-    if dups:
-        fail(f"Duplicate recipe names: {sorted(set(dups))}")
+    # Duplicate names allowed only for paginated variants:
+    # each recipe sharing a name must declare a distinct 'variant' field.
+    from collections import defaultdict
+    by_name = defaultdict(list)
+    for r in data['recipes']:
+        by_name[r['name']].append(r)
+    for name, group in by_name.items():
+        if len(group) <= 1:
+            continue
+        variants = [r.get('variant') for r in group]
+        if any(v is None for v in variants):
+            fail(f"Duplicate name {name!r} missing 'variant' field on one or more entries")
+        if len(set(variants)) != len(variants):
+            fail(f"Duplicate name {name!r} has non-unique variant labels: {variants}")
 
     # weeklyPlan references
     name_set = set(names)
