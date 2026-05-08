@@ -151,6 +151,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .badge-quickmeal{background:linear-gradient(135deg,#9B59B6,#8e44ad)}
 .badge-type{background:linear-gradient(135deg,#95a5a6,#7f8c8d);color:#fff}
 .recipe-card h3{font-size:1.15em;margin-bottom:12px;line-height:1.3}
+.variant-indicator{position:absolute;top:14px;right:14px;background:linear-gradient(135deg,#34495e,#2c3e50);color:#fff;font-size:0.7em;font-weight:700;padding:3px 9px;border-radius:11px;letter-spacing:0.02em;box-shadow:0 2px 6px rgba(0,0,0,0.18)}
+.modal-pagination{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;padding:10px 14px;background:linear-gradient(135deg,#fef9e7,#fdf6e3);border-radius:12px;border:1px solid rgba(241,196,15,0.25)}
+.modal-pagination button{background:#fff;border:1px solid var(--border);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.1em;font-weight:700;color:var(--text);transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.modal-pagination button:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.08)}
+.modal-pagination .pg-info{font-size:0.92em;color:var(--text);font-weight:600}
+.modal-pagination .pg-variant{color:var(--accent);font-weight:700;margin-left:4px}
 .recipe-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-size:0.85em;color:var(--text-light)}
 .recipe-meta span{display:flex;align-items:center;gap:4px}
 
@@ -668,6 +674,11 @@ function animateCounters(){
 }
 
 // Recipes
+// 같은 메뉴명의 모든 변형(레시피)을 반환
+function getMenuVariants(name){
+return DATA.recipes.filter(r => r.name === name);
+}
+
 function renderRecipes(){
 const grid = document.getElementById('recipeGrid');
 let recipes = DATA.recipes.filter(r => !isSideDish(r));
@@ -676,11 +687,21 @@ if(searchQuery){
 const q = searchQuery.toLowerCase();
 recipes = recipes.filter(r => r.name.toLowerCase().includes(q) || r.ingredients.some(i => i.toLowerCase().includes(q)) || (r.tags && r.tags.some(t => t.toLowerCase().includes(q))));
 }
-grid.innerHTML = recipes.map((r,i) => {
+// 같은 메뉴명은 1개 카드로 묶고 변형 개수 표시
+const seen = {};
+const grouped = [];
+for(const r of recipes){
+if(!seen[r.name]){ seen[r.name] = {recipe: r, count: 1}; grouped.push(seen[r.name]); }
+else seen[r.name].count++;
+}
+grid.innerHTML = grouped.map((g,i) => {
+const r = g.recipe;
 const catClass = CAT_COLORS[r.displayCategory] || 'korean';
 const catName = CAT_NAMES[r.displayCategory] || r.displayCategory;
 const typeName = TYPE_NAMES[r.type] || r.type;
+const variantBadge = g.count > 1 ? `<span class="variant-indicator">${g.count}가지 레시피</span>` : '';
 return `<div class="recipe-card" data-cat="${r.displayCategory}" onclick="openModal('${r.name.replace(/'/g,"\\'")}')">
+${variantBadge}
 <div class="badges"><span class="badge badge-${catClass}">${catName}</span><span class="badge badge-type">${typeName}</span></div>
 <h3>${r.name}</h3>
 <div class="recipe-meta">
@@ -692,7 +713,7 @@ return `<div class="recipe-card" data-cat="${r.displayCategory}" onclick="openMo
 <div style="font-size:0.8em;color:var(--text-light);margin-top:6px">${r.servings}\uc778\ubd84</div>
 </div>`;
 }).join('');
-if(recipes.length === 0) grid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-light)">\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>';
+if(grouped.length === 0) grid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-light)">\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>';
 }
 
 function observeCards(){
@@ -707,16 +728,45 @@ function observeCards(){
   document.querySelectorAll('.recipe-card').forEach(c=>observer.observe(c));
 }
 
-// Modal
+// Modal — 변형(variant)이 여러 개일 경우 페이지네이션 지원
+let modalState = { name: null, index: 0, variants: [] };
+
 function openModal(name){
-const r = DATA.recipes.find(x => x.name === name);
+const variants = getMenuVariants(name);
+if(variants.length === 0) return;
+modalState = { name, index: 0, variants };
+renderModal();
+document.getElementById('modalOverlay').classList.add('active');
+document.body.style.overflow = 'hidden';
+}
+
+function showVariant(delta){
+const n = modalState.variants.length;
+if(n <= 1) return;
+modalState.index = (modalState.index + delta + n) % n;
+renderModal();
+const modalEl = document.getElementById('modal');
+if(modalEl) modalEl.scrollTop = 0;
+}
+
+function renderModal(){
+const r = modalState.variants[modalState.index];
 if(!r) return;
+const total = modalState.variants.length;
+const idx = modalState.index;
 const catClass = CAT_COLORS[r.displayCategory] || 'korean';
 const catName = CAT_NAMES[r.displayCategory] || r.displayCategory;
 const typeName = TYPE_NAMES[r.type] || r.type;
+const variantLabel = r.variant || '기본';
+const pagination = total > 1 ? `<div class="modal-pagination">
+<button onclick="showVariant(-1)" aria-label="이전 레시피">←</button>
+<span class="pg-info">${idx+1} / ${total}<span class="pg-variant">· ${variantLabel}</span></span>
+<button onclick="showVariant(1)" aria-label="다음 레시피">→</button>
+</div>` : '';
 document.getElementById('modal').innerHTML = `
 <button class="modal-close" onclick="closeModal()">&times;</button>
 <h2>${r.name}</h2>
+${pagination}
 <div class="modal-badges">
 <span class="badge badge-${catClass}">${catName}</span>
 <span class="badge badge-type">${typeName}</span>
@@ -751,8 +801,6 @@ return `<li>${s}${tipBlock}</li>`;
 ${r.storageInfo ? `<div class="storage">\ud83d\udce6 <strong>\ubcf4\uad00\ubc95:</strong> ${r.storageInfo}</div>` : ''}
 ${r.source ? `<a class="source-link" href="${r.source}" target="_blank" rel="noopener">\ud83d\udd17 ${r.sourceName || '\ucd9c\ucc98 \ubcf4\uae30'}</a>` : ''}
 <div class="tag-list">${(r.tags||[]).map(t => `<span>#${t}</span>`).join('')}</div>`;
-document.getElementById('modalOverlay').classList.add('active');
-document.body.style.overflow = 'hidden';
 }
 
 function closeModal(){
@@ -796,13 +844,18 @@ return false;
 function generateWeeklyPlan(mode){
 const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 const meals = ['lunch','dinner'];
-let pool = DATA.recipes.filter(r => !isSideDish(r));
+// 메뉴명 기준 dedup: 같은 이름의 변형은 한 번만 풀에 포함
+const dedupByName = arr => {
+const seen = new Set();
+return arr.filter(r => { if(seen.has(r.name)) return false; seen.add(r.name); return true; });
+};
+let pool = dedupByName(DATA.recipes.filter(r => !isSideDish(r)));
 
 if(mode === 'korean') pool = pool.filter(r => r.displayCategory === 'korean' || r.category === 'korean');
 if(mode === 'highprotein') pool = pool.filter(r => r.protein >= 30);
 if(mode === 'quick') pool = pool.filter(r => r.cookTime <= 20);
 
-if(pool.length < 7) pool = DATA.recipes.filter(r => !isSideDish(r));
+if(pool.length < 7) pool = dedupByName(DATA.recipes.filter(r => !isSideDish(r)));
 
 const plan = {};
 
