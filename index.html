@@ -465,7 +465,7 @@ body{background:#fff}
 <option value="balanced">균형 잡힌 식단</option>
 <option value="korean">한식 위주</option>
 <option value="highprotein">고단백 위주</option>
-<option value="quick">초간편 위주 (중복 OK)</option>
+<option value="quick">초간편 위주</option>
 </select>
 <button id="regenerateBtn" style="padding:10px 20px;background:var(--text);color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:0.9em;font-weight:600;">🔄 새 식단 뽑기</button>
 </div>
@@ -858,14 +858,51 @@ if(pool.length < 7) pool = dedupByName(DATA.recipes.filter(r => !isSideDish(r)))
 const plan = {};
 
 if(mode === 'quick'){
-// 초간편: 중복 허용, 5~7개 레시피를 돌려쓰기
-const shuffled = [...pool].sort(() => Math.random() - 0.5);
-const picks = shuffled.slice(0, Math.min(7, shuffled.length));
+// 초간편: 재료 유사도가 높은 5~7개 레시피를 골라 14끼에 분배
+// (장보기 리스트 최소화 = 같은 재료를 여러 끼에서 사용)
+const extractIngredientNames = recipe => {
+const set = new Set();
+for(const ing of recipe.ingredients){
+const m = ing.match(/^(.+?)\s+\d/);
+const itemName = m ? m[1].trim() : ing.trim();
+const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+const canonical = (typeof SHOP_ALIASES !== 'undefined' && (SHOP_ALIASES[itemName] || SHOP_ALIASES[stripped])) || stripped || itemName;
+if(canonical) set.add(canonical);
+}
+return set;
+};
+const ingredientSets = pool.map(r => ({recipe: r, ings: extractIngredientNames(r)}));
+// 시드: 무작위 선택
+const seed = ingredientSets[Math.floor(Math.random() * ingredientSets.length)];
+const picks = [seed];
+const usedNames = new Set([seed.recipe.name]);
+const targetCount = Math.min(7, ingredientSets.length);
+while(picks.length < targetCount){
+// 현재 picks의 재료 집합
+const accIngs = new Set();
+picks.forEach(p => p.ings.forEach(i => accIngs.add(i)));
+// 후보별로 재료 겹침 점수 계산 → 최고 점수 + 랜덤 tiebreak
+let best = null, bestScore = -1;
+const candidates = ingredientSets.filter(c => !usedNames.has(c.recipe.name));
+if(candidates.length === 0) break;
+const scored = candidates.map(c => {
+let overlap = 0;
+c.ings.forEach(i => { if(accIngs.has(i)) overlap++; });
+return {c, score: overlap};
+});
+const maxScore = Math.max(...scored.map(s => s.score));
+const top = scored.filter(s => s.score === maxScore);
+const winner = top[Math.floor(Math.random() * top.length)];
+picks.push(winner.c);
+usedNames.add(winner.c.recipe.name);
+}
+// 14끼 분배 (같은 메뉴 연속 회피)
+const pickNames = picks.map(p => p.recipe.name);
 let idx = 0;
 days.forEach(day => {
 plan[day] = {
-lunch: picks[idx % picks.length].name,
-dinner: picks[(idx+1) % picks.length].name
+lunch: pickNames[idx % pickNames.length],
+dinner: pickNames[(idx+1) % pickNames.length]
 };
 idx += 2;
 });
