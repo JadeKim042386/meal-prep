@@ -186,6 +186,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 
 /* Shopping List */
 .shopping-section{padding:20px 0}
+.plan-theme{padding:14px 20px;margin:0 auto 16px;max-width:760px;background:linear-gradient(135deg,#fff3e0,#fef9e7);border-radius:14px;text-align:center;font-size:1em;color:var(--text);border:1px solid rgba(231,76,60,0.18);box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.plan-theme .theme-icon{font-size:1.2em;margin-right:6px}
+.plan-theme strong{color:var(--accent);font-weight:700;margin-left:2px}
+.plan-theme .theme-sub{display:block;margin-top:4px;font-size:0.85em;color:var(--text-light)}
 .shop-info{padding:12px 16px;background:linear-gradient(135deg,#fef9e7,#fdf6e3);border-radius:10px;margin-bottom:16px;font-size:0.9em;color:var(--text);border:1px solid rgba(241,196,15,0.25);line-height:1.55}
 .shop-info strong{color:var(--accent)}
 .shop-info-sub{display:block;margin-top:6px;font-size:0.92em;color:var(--text-light)}
@@ -470,6 +474,7 @@ body{background:#fff}
 <button id="regenerateBtn" style="padding:10px 20px;background:var(--text);color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:0.9em;font-weight:600;">🔄 새 식단 뽑기</button>
 </div>
 </div>
+<div id="planTheme" class="plan-theme" style="display:none"></div>
 <div class="weekly-table-wrap">
 <table class="weekly-table" id="weeklyTable"></table>
 </div>
@@ -839,6 +844,99 @@ if(r.calories <= 200) return true;
 return false;
 }
 
+// 레시피 → 정규화된 재료명 Set
+function recipeIngredientSet(recipe){
+const set = new Set();
+for(const ing of recipe.ingredients){
+const m = ing.match(/^(.+?)\s+\d/);
+const itemName = m ? m[1].trim() : ing.trim();
+const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+const canonical = (typeof SHOP_ALIASES !== 'undefined' && (SHOP_ALIASES[itemName] || SHOP_ALIASES[stripped])) || stripped || itemName;
+if(canonical) set.add(canonical);
+}
+return set;
+}
+
+// Jaccard 유사도
+function jaccardSim(a, b){
+let inter = 0;
+a.forEach(x => { if(b.has(x)) inter++; });
+const uni = a.size + b.size - inter;
+return uni === 0 ? 0 : inter / uni;
+}
+
+// 응집형 계층 클러스터링: 재료 Jaccard 유사도가 높은 쌍을 반복 병합
+function computeRecipeClusters(pool, targetK){
+const sets = pool.map(r => ({recipe: r, ings: recipeIngredientSet(r)}));
+let clusters = sets.map(s => ({items: [s], ings: new Set(s.ings)}));
+const k = Math.min(targetK, clusters.length);
+while(clusters.length > k){
+let bi = 0, bj = 1, bs = -1;
+for(let i = 0; i < clusters.length; i++){
+for(let j = i+1; j < clusters.length; j++){
+const sim = jaccardSim(clusters[i].ings, clusters[j].ings);
+if(sim > bs){ bs = sim; bi = i; bj = j; }
+}
+}
+const merged = {
+items: [...clusters[bi].items, ...clusters[bj].items],
+ings: new Set([...clusters[bi].ings, ...clusters[bj].ings])
+};
+clusters.splice(bj, 1);
+clusters.splice(bi, 1);
+clusters.push(merged);
+}
+return clusters;
+}
+
+// 클러스터 테마 라벨링: 카테고리 + 단백질 + 조리 스타일
+function labelClusterTheme(cluster){
+const recipes = cluster.items.map(s => s.recipe);
+const half = Math.ceil(recipes.length / 2);
+// 1) 카테고리
+const catCount = {};
+recipes.forEach(r => { const c = r.displayCategory || 'korean'; catCount[c] = (catCount[c]||0) + 1; });
+const dominant = Object.entries(catCount).sort((a,b) => b[1]-a[1])[0];
+const catLabel = (typeof CAT_NAMES !== 'undefined' ? CAT_NAMES[dominant[0]] : dominant[0]) || dominant[0];
+// 2) 단백질 키워드
+const proteins = ['닭가슴살','닭다리살','삼겹살','대패삼겹','소고기','돼지고기','연어','새우','오징어','참치','두부','계란','햄','베이컨','만두','꽁치'];
+const pCount = {};
+recipes.forEach(r => {
+const text = r.ingredients.join(' ');
+proteins.forEach(p => { if(text.includes(p)) pCount[p] = (pCount[p]||0) + 1; });
+});
+const topProteins = Object.entries(pCount)
+.sort((a,b) => b[1]-a[1])
+.filter(([_,c]) => c >= half)
+.slice(0,2)
+.map(([p]) => p);
+// 3) 스타일
+const styleChecks = [
+['덮밥', r => r.name.includes('덮밥')],
+['시트팬', r => r.type === 'sheet-pan' || r.name.includes('시트팬')],
+['찌개·국물', r => /찌개|탕|국밥|개장|짜글이/.test(r.name)],
+['찜', r => /찜/.test(r.name)],
+['면', r => /파스타|국수|우동|랩|쫄면|짜장|짬뽕/.test(r.name)],
+['볶음밥', r => r.name.includes('볶음밥')],
+['비빔밥·볼', r => /비빔밥|볼\s*$|볼\s*\(/.test(r.name)],
+['샐러드', r => r.name.includes('샐러드')]
+];
+const sCount = {};
+recipes.forEach(r => {
+styleChecks.forEach(([s, f]) => { if(f(r)) sCount[s] = (sCount[s]||0) + 1; });
+});
+const topStyles = Object.entries(sCount)
+.sort((a,b) => b[1]-a[1])
+.filter(([_,c]) => c >= half)
+.slice(0,2)
+.map(([s]) => s);
+// 조립
+const parts = [catLabel];
+if(topProteins.length) parts.push(topProteins.join('·'));
+if(topStyles.length) parts.push(topStyles.join('·'));
+return parts.join(' ');
+}
+
 function generateWeeklyPlan(mode){
 const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 const meals = ['lunch','dinner'];
@@ -858,45 +956,17 @@ if(pool.length < 7) pool = dedupByName(DATA.recipes.filter(r => !isSideDish(r)))
 const plan = {};
 
 if(mode === 'quick'){
-// 초간편: 재료 유사도가 높은 5~7개 레시피를 골라 14끼에 분배
-// (장보기 리스트 최소화 = 같은 재료를 여러 끼에서 사용)
-const extractIngredientNames = recipe => {
-const set = new Set();
-for(const ing of recipe.ingredients){
-const m = ing.match(/^(.+?)\s+\d/);
-const itemName = m ? m[1].trim() : ing.trim();
-const stripped = itemName.replace(/\s*\([^)]*\)\s*/g, '').trim();
-const canonical = (typeof SHOP_ALIASES !== 'undefined' && (SHOP_ALIASES[itemName] || SHOP_ALIASES[stripped])) || stripped || itemName;
-if(canonical) set.add(canonical);
-}
-return set;
-};
-const ingredientSets = pool.map(r => ({recipe: r, ings: extractIngredientNames(r)}));
-// 시드: 무작위 선택
-const seed = ingredientSets[Math.floor(Math.random() * ingredientSets.length)];
-const picks = [seed];
-const usedNames = new Set([seed.recipe.name]);
-const targetCount = Math.min(7, ingredientSets.length);
-while(picks.length < targetCount){
-// 현재 picks의 재료 집합
-const accIngs = new Set();
-picks.forEach(p => p.ings.forEach(i => accIngs.add(i)));
-// 후보별로 재료 겹침 점수 계산 → 최고 점수 + 랜덤 tiebreak
-let best = null, bestScore = -1;
-const candidates = ingredientSets.filter(c => !usedNames.has(c.recipe.name));
-if(candidates.length === 0) break;
-const scored = candidates.map(c => {
-let overlap = 0;
-c.ings.forEach(i => { if(accIngs.has(i)) overlap++; });
-return {c, score: overlap};
-});
-const maxScore = Math.max(...scored.map(s => s.score));
-const top = scored.filter(s => s.score === maxScore);
-const winner = top[Math.floor(Math.random() * top.length)];
-picks.push(winner.c);
-usedNames.add(winner.c.recipe.name);
-}
-// 14끼 분배 (같은 메뉴 연속 회피)
+// 초간편: 재료 유사도 기반 응집형 계층 클러스터링으로 묶음 추출
+// 임의 클러스터를 골라 14끼에 분배 → 장보기 리스트 최소화 + 테마 라벨 표시
+const clusters = computeRecipeClusters(pool, 12);
+// 3개 미만 클러스터(고립 outlier)는 제외, 부족하면 2개 이상 허용
+let usable = clusters.filter(c => c.items.length >= 3);
+if(usable.length === 0) usable = clusters.filter(c => c.items.length >= 2);
+if(usable.length === 0) usable = clusters;
+const chosen = usable[Math.floor(Math.random() * usable.length)];
+// 클러스터 내부 무작위 셔플 후 7개 선택 (매번 다른 7개)
+const shuffledItems = [...chosen.items].sort(() => Math.random() - 0.5);
+const picks = shuffledItems.slice(0, Math.min(7, shuffledItems.length));
 const pickNames = picks.map(p => p.recipe.name);
 let idx = 0;
 days.forEach(day => {
@@ -906,6 +976,7 @@ dinner: pickNames[(idx+1) % pickNames.length]
 };
 idx += 2;
 });
+plan._theme = labelClusterTheme(chosen);
 } else {
 // 일반: 14끼 비중복, 카테고리 분산
 const shuffled = [...pool].sort(() => Math.random() - 0.5);
@@ -939,6 +1010,17 @@ const savedMode = localStorage.getItem('mealprep-plan-mode');
 if(savedMode){
 const sel = document.getElementById('planMode');
 if(sel) sel.value = savedMode;
+}
+
+// 클러스터 테마 배너 (초간편 모드 전용)
+const themeEl = document.getElementById('planTheme');
+if(themeEl){
+if(activePlan._theme && savedMode === 'quick'){
+themeEl.innerHTML = `<span class="theme-icon">🎯</span>이번 주 식단 테마: <strong>${activePlan._theme} 위주</strong><span class="theme-sub">재료 유사도 클러스터링으로 장보기 항목을 최소화했어요</span>`;
+themeEl.style.display = 'block';
+} else {
+themeEl.style.display = 'none';
+}
 }
 
 let html = '<thead><tr><th>요일</th><th>🍜 점심</th><th>🍛 저녁</th><th>합계</th></tr></thead><tbody>';
