@@ -1,1 +1,10 @@
 .DS_Store
+
+# Basic Memory project-local artifacts (if any)
+knowledge/.bm-cache/
+knowledge/*.db
+knowledge/*.sqlite
+knowledge/*.sqlite-*
+
+# handoff is rewritten every session by /save-memory — keep local only
+knowledge/handoff.md
