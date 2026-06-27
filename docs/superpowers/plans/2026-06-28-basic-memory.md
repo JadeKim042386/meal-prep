@@ -805,16 +805,18 @@ cd ~/Desktop/meal-prep && git status
 ```
 Expected: untracked — `CLAUDE.md`, `knowledge/`.
 
-- [ ] **Step 2: 색인/캐시 차단 — `.gitignore` 보강**
+- [ ] **Step 2: 색인/캐시 차단 + 노이즈 노트 제외 — `.gitignore` 보강**
+
+추적 정책: `overview.md`, `data-artifacts.md`, `decisions/`(ADR)는 추적. 매 세션 덮어쓰이는 `handoff.md`는 노이즈 회피를 위해 추적 제외(로컬 전용).
 
 Run:
 ```bash
 grep -qE '^knowledge/\.bm-cache' ~/Desktop/meal-prep/.gitignore 2>/dev/null || {
-  printf '\n# Basic Memory project-local artifacts (if any)\nknowledge/.bm-cache/\nknowledge/*.db\nknowledge/*.sqlite\nknowledge/*.sqlite-*\n' >> ~/Desktop/meal-prep/.gitignore
+  printf '\n# Basic Memory project-local artifacts (if any)\nknowledge/.bm-cache/\nknowledge/*.db\nknowledge/*.sqlite\nknowledge/*.sqlite-*\n\n# handoff is rewritten every session by /save-memory — keep local only\nknowledge/handoff.md\n' >> ~/Desktop/meal-prep/.gitignore
 }
 cat ~/Desktop/meal-prep/.gitignore
 ```
-Expected: 위 4줄이 포함됨.
+Expected: 위 6줄(캐시 4 + handoff 1 + 주석)이 포함됨.
 
 - [ ] **Step 3: 스테이징**
 
@@ -824,7 +826,7 @@ cd ~/Desktop/meal-prep
 git add CLAUDE.md knowledge/ .gitignore
 git status --short
 ```
-Expected: `A` 라인들로 CLAUDE.md, knowledge/*, .gitignore 표시 (이미 추적 중인 .gitignore면 `M`).
+Expected: `A` 라인들로 CLAUDE.md, `knowledge/overview.md`, `knowledge/data-artifacts.md`, `knowledge/decisions/0001-baseline.md`, `knowledge/decisions/.gitkeep`, `knowledge/analysis/.gitkeep`, .gitignore 표시. **`knowledge/handoff.md`는 ignore에 의해 stage되지 않음**(.gitignore 정책대로).
 
 - [ ] **Step 4: 커밋**
 
