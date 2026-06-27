@@ -79,7 +79,7 @@ macOS(`darwin`, zsh, miniconda 환경) 환경에 **동일한 6계층 시스템**
 
 ### 3.3 라우팅 규칙
 
-SessionStart 훅은 `pwd`(또는 `CLAUDE_PROJECT_DIR`) 기준으로:
+SessionStart 훅은 프로젝트 루트 = `${CLAUDE_PROJECT_DIR:-$PWD}` 기준으로:
 
 1. 현재 폴더에 `./knowledge/handoff.md` **존재 시** → 그 파일 + `./knowledge/overview.md`만 출력 (중앙 허브는 건너뜀)
 2. **부재 시** → 중앙 허브 `~/Desktop/knowledge/{handoff,overview}.md` 출력
@@ -102,13 +102,13 @@ SessionStart 훅은 `pwd`(또는 `CLAUDE_PROJECT_DIR`) 기준으로:
 ### 4.2 `~/.claude/hooks/basic-memory-session-start.sh` (신규)
 
 - **트리거**: SessionStart (`startup`, `resume`, `/clear`)
-- **입력**: 환경변수 `CLAUDE_PROJECT_DIR` (없으면 `pwd`)
+- **입력**: 프로젝트 루트 = `${CLAUDE_PROJECT_DIR:-$PWD}` (환경변수 우선, 없으면 `pwd`)
 - **출력**: stdout으로 마크다운 컨텍스트 (additionalContext로 자동 주입)
 - **로직**:
   1. `$CLAUDE_PROJECT_DIR/knowledge/handoff.md` 존재 시 → 그 파일과 `overview.md` 출력 후 종료
   2. 그렇지 않으면 → `~/Desktop/knowledge/handoff.md`/`overview.md` 출력
   3. 둘 다 없으면 → 무음 종료
-- **출력 헤더**: `<!-- bm: project=<name> -->` (디버그용)
+- **출력 헤더**: `<!-- bm: project=<name> -->` (디버그용). `<name>`은 프로젝트 루트 디렉토리의 basename (예: `meal-prep`, `desktop`)
 - **안전장치**: 5초 타임아웃, 출력 16KB 캡, 어떤 오류도 exit 0 으로 마무리 (세션 자체를 막지 않음)
 
 ### 4.3 `~/.claude/commands/save-memory.md` (신규)
@@ -139,6 +139,7 @@ SessionStart 훅은 `pwd`(또는 `CLAUDE_PROJECT_DIR`) 기준으로:
 - **git**:
   - 중앙 허브: 신규 독립 리포지토리(`git init`)
   - meal-prep: 기존 리포지토리에 `knowledge/` 추가 후 커밋
+  - **gitignore 정책**: Basic Memory 기본 DB 경로는 `~/.basic-memory/` 외부 캐시로 `knowledge/` 외부에 있어 일반적으로 추적 대상이 아님. 만약 프로젝트 폴더 내부에 어떤 색인/캐시 산출물이 생긴다면(예: `knowledge/.bm-cache/`, `*.db`, `*.sqlite*`) `.gitignore`에 추가해 커밋 금지
 
 ## 5. 데이터 흐름
 
