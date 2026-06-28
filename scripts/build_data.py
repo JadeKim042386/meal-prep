@@ -77,6 +77,10 @@ def build_weekly_plan(recipes: list) -> dict:
                         break
         if not progressed:
             break
+    if len(picks) < 14:
+        raise SystemExit(
+            f"Need >=14 distinct recipes for a non-repeating week, got {len(picks)}"
+        )
     days = ["monday", "tuesday", "wednesday", "thursday",
             "friday", "saturday", "sunday"]
     plan = {}
@@ -121,7 +125,15 @@ def split_item(line: str):
 
 
 def build_shopping_list(recipes: list, plan: dict) -> dict:
-    used_names = {n for day in plan.values() for n in day.values()}
+    # Deterministic order (day -> lunch/dinner) so re-runs are byte-stable.
+    days = ["monday", "tuesday", "wednesday", "thursday",
+            "friday", "saturday", "sunday"]
+    used_names = []
+    for day in days:
+        for meal in ("lunch", "dinner"):
+            name = plan[day][meal]
+            if name not in used_names:
+                used_names.append(name)
     by_name = {r["name"]: r for r in recipes}
     buckets = {k: {} for k in ["meat", "vegetable", "dairy", "grain", "sauce", "etc"]}
     for name in used_names:
