@@ -21,12 +21,14 @@ Shared standard for every recipe authored in the overhaul (see plan `2026-06-28-
 - **M1 Batch & store** — scales to `servings` (default 4); `storageInfo` states fridge days (3–5) and what to store separately.
 - **M2 Reheats/holds** — no textures that die on reheat unless the recipe isolates them (crunch/fresh element added at serving, stated in steps + storageInfo).
 - **M3 Make-ahead technique** — e.g. dress grains while warm, keep sauces/crunch separate, choose cuts that stay moist. → `techniques/marination-tenderizing`, `techniques/moist-heat-methods`
+- **M4 Standalone meal** — every recipe is a complete one-dish meal you can eat on its own (protein + carb/veg, e.g. 덮밥/보울/볶음밥/면/시트팬 한 접시). NO side dishes (반찬/밑반찬/나물/곁들임/장아찌/single-component sides). If it would normally be eaten *with* rice, the recipe must include the rice/grain as part of the dish.
 
 ### Data gates (D)
 - **D1 Purchasable ingredients** — every `ingredients` line is buyable as written, with an amount. No composites (`전분물` etc.); write slurry in *steps* as parts (`감자전분 1큰술 + 물 2큰술`), never as an ingredient line.
 - **D2 Specific, technique-cued steps** — each step names heat level / time / a visual or temperature cue; 5–9 steps; final step covers portioning, cooling, storage.
 - **D3 Plausible macros** — `calories/protein/carbs/fat` roughly consistent with ingredients ÷ `servings`; `protein` realistic grams per serving.
 - **D4 Schema valid** — all required fields present; enums respected; unique `name`; no typo-guard hits.
+- **D5 Simple & fast** — `cookTime` ≤ 20 (minutes) AND ≤ 10 ingredient lines total (including seasonings; lean on shared pantry staples). Fast/simple is NOT an excuse for flat — all flavor gates G1–G9 still apply.
 
 **Scoring:** each gate = pass/fail + one-line justification; every fail needs a concrete fix. Reviewers default to FAIL when unconvinced and cite KB notes by exact title.
 
@@ -43,13 +45,15 @@ Shared standard for every recipe authored in the overhaul (see plan `2026-06-28-
 - `category` = internal grouping; set it equal to `displayCategory` for new recipes.
 - **Typo guard — never emit:** `키친타올`(→키친타월), `후라이한다`(→프라이한다), `소세지`(→소시지), `달걸`(→달걀).
 - Bodies/steps in Korean (this is a Korean app); identifiers Korean.
+- **Every recipe ≤ 20 min cookTime and ≤ 10 ingredient lines (D5).**
+- **No side dishes — meals only (M4).** Do not emit `반찬`/`밑반찬`/`나물`/`사이드`/`곁들임` tags.
 
 ### Mode coverage (set-level, not per recipe)
 The app generates weekly plans live from `DATA.recipes`. Keep:
 - `displayCategory==='korean'` ≥14 (korean mode; app filter is `displayCategory==='korean' || category==='korean'`).
 - `protein>=30` ≥18 (highprotein mode).
-- `cookTime<=20` ≥10, built as 2–3 shared-pantry families so the 초간편 ingredient-similarity clusterer can group them.
-- Tag true side dishes precisely; `tags` feeds `isSideDish` (side-tags + `calories<=250`, or `calories<=200`) which excludes them from plans. Keep most recipes mains.
+- `cookTime<=20` — now ALL recipes (quick mode pool = whole set). Keep the `quickmeal` displayCategory dishes as a shared-pantry family so the 초간편 ingredient-similarity clusterer can still group them.
+- All recipes are mains (M4), so `isSideDish` excludes nothing — the weekly-plan pool is the full set.
 
 ---
 
