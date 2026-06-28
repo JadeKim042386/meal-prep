@@ -95,15 +95,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .header{background:conic-gradient(from var(--gradient-angle),#fff9f0,#f0f7ff,#fdf2f8,#f0fdf4,#fff9f0);background-size:100%;animation:spin-gradient 8s linear infinite;padding:48px 0 28px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
 .header::before{content:'';position:absolute;top:-100px;right:-100px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(231,76,60,0.08),transparent 70%);pointer-events:none}
 .header::after{content:'';position:absolute;bottom:-80px;left:-80px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(52,152,219,0.06),transparent 70%);pointer-events:none}
-.header h1{font-size:2.5em;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,#2c3e50 30%,#E74C3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;max-width:800px;margin:0 auto;padding:0 20px}
-.stat-card{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.8);border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.06);transition:var(--transition)}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
-.stat-card .stat-value{font-size:2em;font-weight:700;letter-spacing:-0.02em}
-.stat-card .stat-label{font-size:0.82em;font-weight:500;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-light);margin-top:6px}
-.stat-card:nth-child(2) .stat-value{color:var(--western)}
-.stat-card:nth-child(3) .stat-value{color:var(--asian)}
-.stat-card:nth-child(4) .stat-value{color:var(--mediterranean)}
+.header h1{font-size:2.5em;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,#2c3e50 30%,#E74C3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
+.tagline{font-size:1.05em;font-weight:500;color:var(--text-light);letter-spacing:-0.01em;margin:0 auto;max-width:640px}
 
 /* Navigation */
 .nav{position:sticky;top:0;z-index:100;background:rgba(248,246,242,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:12px 0}
@@ -370,15 +363,11 @@ body{background:#fff}
 /* Mobile */
 @media(max-width:768px){
 .header h1{font-size:1.8em}
-.stats-grid{grid-template-columns:repeat(2,1fr)}
+.tagline{font-size:0.95em}
 .recipe-grid{grid-template-columns:1fr}
 .nav-tab{padding:8px 16px;font-size:0.85em}
 .modal{padding:20px;margin:10px}
 .weekly-table{font-size:0.85em}
-}
-@media(max-width:480px){
-.stats-grid{grid-template-columns:1fr 1fr}
-.stat-card{padding:12px}
 }
 /* Feedback floating button & modal */
 .feedback-btn{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(52,152,219,0.4);z-index:9998;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease}
@@ -422,12 +411,7 @@ body{background:#fff}
 <div class="header">
 <div class="container">
 <h1>&#x1F373; 밀프랩 플래너(Meal-Prep Planner)</h1>
-<div style="margin-bottom:12px;">
-<a href="https://hits.sh/jadekim042386.github.io/meal-prep/">
-<img alt="Hits" src="https://hits.sh/jadekim042386.github.io/meal-prep.svg?style=flat-square&label=visitors&color=2c3e50&labelColor=e0ddd7" style="height:24px;"/>
-</a>
-</div>
-<div class="stats-grid" id="statsGrid"></div>
+<p class="tagline">간단한 재료로, 빠르게 만드는 한 주 식단</p>
 </div>
 </div>
 
@@ -642,40 +626,6 @@ return display + trailingText + ' (약 ' + totalG + 'g)';
 
 let currentCat = 'all';
 let searchQuery = '';
-
-// Stats
-function renderStats(){
-const meals = DATA.recipes.filter(r => !isSideDish(r));
-const total = meals.length;
-const avgTime = Math.round(meals.reduce((s,r)=>s+r.cookTime,0)/total*10)/10;
-const avgCal = Math.round(meals.reduce((s,r)=>s+r.calories,0)/total*10)/10;
-const opCount = meals.filter(r=>['one-pan','one-pot','sheet-pan'].includes(r.type)).length;
-const opRatio = Math.round(opCount/total*1000)/10+'%';
-document.getElementById('statsGrid').innerHTML = `
-<div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">\ucd1d \ub808\uc2dc\ud53c</div></div>
-<div class="stat-card"><div class="stat-value">${avgTime}\ubd84</div><div class="stat-label">\ud3c9\uade0 \uc870\ub9ac\uc2dc\uac04</div></div>
-<div class="stat-card"><div class="stat-value">${avgCal}</div><div class="stat-label">\ud3c9\uade0 \uce7c\ub85c\ub9ac (kcal)</div></div>
-<div class="stat-card"><div class="stat-value">${opRatio}</div><div class="stat-label">\uc6d0\ud32c/\uc6d0\ud31f \ube44\uc728</div></div>`;
-}
-
-function animateCounters(){
-  document.querySelectorAll('.stat-value').forEach(el=>{
-    const text=el.textContent;
-    const num=parseFloat(text);
-    if(isNaN(num))return;
-    const suffix=text.replace(String(num),'');
-    const duration=1500;
-    const start=performance.now();
-    const step=(now)=>{
-      const progress=Math.min((now-start)/duration,1);
-      const eased=1-Math.pow(1-progress,3);
-      const current=num*eased;
-      el.textContent=(num%1===0?Math.floor(current):current.toFixed(1))+suffix;
-      if(progress<1)requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  });
-}
 
 // Recipes
 // 같은 메뉴명의 모든 변형(레시피)을 반환
@@ -1614,8 +1564,6 @@ if(!CSS.supports('animation-timeline','scroll()')){
 }
 
 // Init
-renderStats();
-animateCounters();
 renderRecipes();
 observeCards();
 renderWeekly();
