@@ -10,7 +10,9 @@ Static single-page recipe collection and weekly meal-prep planner. Pure HTML/CSS
 
 ## Facts
 - [fact] 50 original, KB-grounded recipes (korean 14 / western 9 / asian 9 / mediterranean 6 / mexican 6 / quickmeal 6) — designed for flavor, not scraped; see [[ADR 0004 Recipe Overhaul]] #recipes
+- [fact] All recipes are simple & fast: ≤20 min, ≤10 ingredient lines, standalone meals (no side dishes) — see [[ADR 0005 Recipe Simplification and Minimal UI]] #recipes
 - [fact] Recipes authored in `data/recipes/<category>.json`, built into `index.html` DATA via `scripts/build_data.py`; every recipe passed an adversarial KB flavor rubric #recipes
+- [fact] Header is minimal (title + tagline); the visitor badge and aggregate stats hero were removed #ui
 - [fact] 4 weekly plan modes: balanced / Korean-heavy / high-protein / 초간편 (super-simple) #modes
 - [fact] Auto-generated shopping list backed by `localStorage` checkboxes #shopping-list
 - [fact] Search by name, ingredient, or tag; category filters via tabs #search
@@ -39,3 +41,5 @@ Static single-page recipe collection and weekly meal-prep planner. Pure HTML/CSS
 - has-cooking-knowledge [[Cooking Knowledge Index]]
 - baseline-decision [[ADR 0001 Static Single-Page Architecture]]
 - cooking-knowledge-decision [[ADR 0003 Cooking Knowledge Taxonomy]]
+- recipe-decision [[ADR 0004 Recipe Overhaul]]
+- simplification-decision [[ADR 0005 Recipe Simplification and Minimal UI]]
