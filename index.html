@@ -664,7 +664,7 @@ ${variantBadge}
 <span>\ud83d\udd25 ${r.calories}kcal</span>
 <span>\ud83d\udcaa ${r.protein}g</span>
 </div>
-<div style="font-size:0.8em;color:var(--text-light);margin-top:6px">${r.servings}\uc778\ubd84</div>
+<div style="font-size:0.8em;color:var(--text-light);margin-top:6px">${r.servings}\uc778\ubd84 \u00b7 1\uc778 ${r.servings}\ub07c\ubd84</div>
 </div>`;
 }).join('');
 if(grouped.length === 0) grid.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-light)">\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>';
@@ -729,7 +729,7 @@ ${pagination}
 <div><strong>${r.difficulty}</strong>\ub09c\uc774\ub3c4</div>
 <div><strong>\ud83d\udd25 ${r.calories}kcal</strong>\uce7c\ub85c\ub9ac</div>
 <div><strong>\ud83d\udcaa ${r.protein}g</strong>\ub2e8\ubc31\uc9c8</div>
-<div><strong>${r.servings}\uc778\ubd84</strong>\ubd84\ub7c9</div>
+<div><strong>${r.servings}\uc778\ubd84</strong> \ubd84\ub7c9 \u00b7 1\uc778 ${r.servings}\ub07c\ubd84(\ud55c \ubc88\uc5d0 \ub9cc\ub4e4\uc5b4 \ub098\ub220 \uba39\uae30)</div>
 </div>
 <h4>\ud83e\udd62 \uc7ac\ub8cc</h4>
 <ul class="ingredient-list">${r.ingredients.map(ing => {
@@ -1171,7 +1171,7 @@ const plan = activePlan[day];
 if(!plan) return;
 ['lunch','dinner'].forEach(meal => { if(plan[meal]) mealCount++; });
 });
-let html = `<div class="shop-info">📋 이번 주 <strong>${mealCount}끼</strong> 분 <strong>최소 구매량</strong>입니다 — 각 레시피를 한 배치(인분 단위)로 만들 수 있도록 올림 환산했어요. <span class="shop-info-sub">레시피 인분이 끼니 수보다 많으면 <strong>잉여 분량은 다음 식사·도시락으로 활용</strong>하세요.</span></div>`;
+let html = `<div class="shop-info">📋 이번 주 <strong>${mealCount}끼</strong>(1인 기준) <strong>최소 구매량</strong>입니다 — 각 레시피를 <strong>한 배치(=레시피 인분 단위)</strong>로 만드는 기준이에요. 한 번 만들면 여러 끼로 나눠 먹습니다. <span class="shop-info-sub">남는 분량은 <strong>다음 식사·도시락으로 활용</strong>하세요.</span></div>`;
 cats.forEach(cat => {
 const items = shoppingData[cat] || [];
 if(items.length === 0) return;
@@ -1456,7 +1456,7 @@ html += `<div class="cook-phase" data-phase="${phase.n}">
 <div class="cook-phase-items">${phase.items.map(r => `
 <div class="cook-item" data-cat="${r.displayCategory||''}" onclick="openModal('${r.name.replace(/'/g,"\\'")}')">
 <div class="cook-item-name">${r.name}</div>
-<div class="cook-item-meta">⏱ ${r.cookTime}분 · ${r.servings||4}인분 · ${r._slots.join(', ')}</div>
+<div class="cook-item-meta">⏱ ${r.cookTime}분 · ${r.servings||4}인분(1인 ${r.servings||4}끼분) · ${r._slots.join(', ')}</div>
 </div>`).join('')}</div>
 </div>`;
 });
