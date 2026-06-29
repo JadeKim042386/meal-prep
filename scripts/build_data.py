@@ -58,34 +58,54 @@ def build_stats(recipes: list) -> dict:
 
 
 def build_weekly_plan(recipes: list) -> dict:
-    """Pick 14 distinct recipes spread across categories, round-robin."""
+    """Meal-prep batch model (1 serving per meal slot): pick just enough
+    recipes that their servings cover the 14 weekly meals (~4 for 4-serving
+    recipes), then round-robin them across slots so repeats are spread out.
+    Cooking one batch of each then covers the week with minimal leftover."""
+    by_name = {r["name"]: r for r in recipes}
     by_cat = {k: [] for k in DISPLAY_ORDER}
     for r in recipes:
         by_cat[r["displayCategory"]].append(r["name"])
-    picks, seen = [], set()
-    # round-robin across categories until we have 14 distinct names
-    while len(picks) < 14:
-        progressed = False
+    # category-spread candidate order
+    order = []
+    while any(by_cat.values()):
         for k in DISPLAY_ORDER:
             if by_cat[k]:
-                name = by_cat[k].pop(0)
-                progressed = True
-                if name not in seen:
-                    seen.add(name)
-                    picks.append(name)
-                    if len(picks) == 14:
-                        break
-        if not progressed:
+                order.append(by_cat[k].pop(0))
+    TOTAL = 14
+    picks, covered = [], 0
+    for name in order:
+        if covered >= TOTAL:
             break
-    if len(picks) < 14:
-        raise SystemExit(
-            f"Need >=14 distinct recipes for a non-repeating week, got {len(picks)}"
-        )
+        picks.append(name)
+        covered += by_name[name].get("servings", 1)
+    if not picks:
+        raise SystemExit("No recipes available to build a weekly plan")
+    # servings-capped round-robin: place one meal per recipe each pass while
+    # its remaining servings allow it, so repeats spread out and no recipe
+    # appears more than `servings` times (unless the pool can't cover 14).
+    cap = {n: by_name[n].get("servings", 1) for n in picks}
+    order = []
+    while len(order) < TOTAL:
+        placed = False
+        for n in picks:
+            if len(order) >= TOTAL:
+                break
+            if cap[n] > 0:
+                order.append(n)
+                cap[n] -= 1
+                placed = True
+        if not placed:
+            for n in picks:
+                if len(order) >= TOTAL:
+                    break
+                order.append(n)
     days = ["monday", "tuesday", "wednesday", "thursday",
             "friday", "saturday", "sunday"]
+    slots = [(d, m) for d in days for m in ("lunch", "dinner")]
     plan = {}
-    for i, day in enumerate(days):
-        plan[day] = {"lunch": picks[2 * i], "dinner": picks[2 * i + 1]}
+    for i, (day, meal) in enumerate(slots):
+        plan.setdefault(day, {})[meal] = order[i]
     return plan
 
 
