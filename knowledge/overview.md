@@ -9,12 +9,13 @@ tags: [project, overview, meal-prep]
 Static single-page recipe collection and weekly meal-prep planner. Pure HTML/CSS/JS, deployed via GitHub Pages.
 
 ## Facts
-- [fact] 58 original, KB-grounded recipes (korean 22 / western 9 / asian 9 / mediterranean 6 / mexican 6 / quickmeal 6) — designed for flavor, not scraped; see [[ADR 0004 Recipe Overhaul]] #recipes
+- [fact] 88 recipes (korean 39 / asian 17 / western 10 / quickmeal 10 / mediterranean 6 / mexican 6): 58 original KB-grounded ([[ADR 0004 Recipe Overhaul]]) + 30 adapted from 자취요리 YouTube channels ([[ADR 0008 YouTube-Adapted App Recipes]], tagged `유튜브각색`, source-credited) #recipes
 - [fact] All recipes are simple & fast: ≤20 min, ≤10 ingredient lines, standalone meals (no side dishes) — see [[ADR 0005 Recipe Simplification and Minimal UI]] #recipes
 - [fact] Includes 8 Korean soups/stews (김치찌개·된장찌개·순두부·부대찌개·미역국·콩나물국밥·어묵탕·뭇국) in `data/recipes/soup.json`, tagged `국물` — see [[ADR 0006 Add Korean Soup Recipes]] #recipes
 - [fact] Recipes authored in `data/recipes/<category>.json`, built into `index.html` DATA via `scripts/build_data.py`; every recipe passed an adversarial KB flavor rubric #recipes
 - [fact] Header is minimal (title + tagline); the visitor badge and aggregate stats hero were removed #ui
 - [fact] 4 weekly plan modes: balanced / Korean-heavy / high-protein / 초간편 (super-simple) #modes
+- [fact] Weekly plan is meal-prep batch-based (1인 기준): each recipe repeated by `servings`, ~4 dishes fill the 14-meal week — see [[ADR 0007 Meal-Prep Batch Weekly Plan]] #modes
 - [fact] Auto-generated shopping list backed by `localStorage` checkboxes #shopping-list
 - [fact] Search by name, ingredient, or tag; category filters via tabs #search
 - [fact] Single `index.html` + tiny CSS — no external runtime libraries #tech-stack
@@ -45,3 +46,6 @@ Static single-page recipe collection and weekly meal-prep planner. Pure HTML/CSS
 - recipe-decision [[ADR 0004 Recipe Overhaul]]
 - simplification-decision [[ADR 0005 Recipe Simplification and Minimal UI]]
 - soup-decision [[ADR 0006 Add Korean Soup Recipes]]
+- weekly-plan-decision [[ADR 0007 Meal-Prep Batch Weekly Plan]]
+- youtube-recipe-decision [[ADR 0008 YouTube-Adapted App Recipes]]
+- has-youtube-research [[자취요리 YouTube 채널 조사 인덱스]]
